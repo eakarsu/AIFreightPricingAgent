@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const db = require('../db');
-const { askAI } = require('../services/openrouter');
+const { askAI, parseAIJson } = require('../services/openrouter');
+const { aiRateLimiter } = require('../middleware/rateLimiter');
+const { persistAIResult } = require('../services/aiResults');
 
 router.get('/', async (req, res) => {
   try {
@@ -39,31 +41,22 @@ router.post('/', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/optimize', async (req, res) => {
+router.post('/optimize', aiRateLimiter, async (req, res) => {
   try {
     const { category, description, current_spend } = req.body;
 
-    const systemPrompt = `You are a logistics cost optimization specialist for a global freight platform. Analyze shipping operations and provide specific, actionable cost reduction recommendations. Structure your response:
-
-**Optimization Opportunity**: Clear description of the opportunity
-**Current State Analysis**: What's happening now and why it's suboptimal
-**Recommended Actions**:
-1. Specific action items with expected impact
-2. Each with timeline and complexity
-**Projected Savings**: Specific dollar amounts and percentages
-**Implementation Plan**: Step-by-step approach
-**Risk Assessment**: Potential risks and mitigation strategies
-**Priority Level**: Critical/High/Medium/Low with justification`;
-
-    const userPrompt = `Analyze and optimize freight costs:
-- Category: ${category || 'General'}
-- Description: ${description || 'Overall freight spend optimization'}
-- Current Monthly Spend: ${current_spend ? '$' + current_spend : 'Not specified'}
-
-Provide detailed cost optimization recommendations.`;
+    const systemPrompt = `You are a logistics cost optimization specialist. Return ONLY valid JSON: {opportunity, current_state_analysis, recommended_actions: [{action, timeline, complexity, impact_usd}], projected_savings_usd, projected_savings_pct, implementation_plan (array), risk_assessment, priority (critical|high|medium|low), summary}.`;
+    const userPrompt = JSON.stringify({ category, description, current_monthly_spend: current_spend });
 
     const aiResponse = await askAI(systemPrompt, userPrompt);
-    res.json({ ai_recommendation: aiResponse, category, description });
+    const parsed = parseAIJson(aiResponse);
+
+    await persistAIResult({
+      userId: req.user?.id, entityType: 'cost_optimization', entityId: null,
+      analysisType: 'optimize', raw: aiResponse, parsed
+    });
+
+    res.json({ ai_recommendation: aiResponse, parsed, category, description });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

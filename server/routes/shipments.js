@@ -3,18 +3,34 @@ const db = require('../db');
 
 router.get('/', async (req, res) => {
   try {
-    const { search, status, mode } = req.query;
-    let query = `SELECT s.*, c.company_name as customer_name, cr.name as carrier_name
+    const { search, status, mode, page, limit: limitQ } = req.query;
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limitQ) || 20));
+    const offset = (pageNum - 1) * limitNum;
+
+    let baseWhere = `WHERE 1=1`;
+    const params = [];
+    if (search) { params.push(`%${search}%`); baseWhere += ` AND (s.tracking_number ILIKE $${params.length} OR s.origin ILIKE $${params.length} OR s.destination ILIKE $${params.length})`; }
+    if (status) { params.push(status); baseWhere += ` AND s.status = $${params.length}`; }
+    if (mode) { params.push(mode); baseWhere += ` AND s.mode = $${params.length}`; }
+
+    const countQuery = `SELECT COUNT(*) FROM shipments s ${baseWhere}`;
+    const dataQuery = `SELECT s.*, c.company_name as customer_name, cr.name as carrier_name
       FROM shipments s
       LEFT JOIN customers c ON s.customer_id = c.id
-      LEFT JOIN carriers cr ON s.carrier_id = cr.id WHERE 1=1`;
-    const params = [];
-    if (search) { params.push(`%${search}%`); query += ` AND (s.tracking_number ILIKE $${params.length} OR s.origin ILIKE $${params.length} OR s.destination ILIKE $${params.length})`; }
-    if (status) { params.push(status); query += ` AND s.status = $${params.length}`; }
-    if (mode) { params.push(mode); query += ` AND s.mode = $${params.length}`; }
-    query += ' ORDER BY s.created_at DESC';
-    const result = await db.query(query, params);
-    res.json(result.rows);
+      LEFT JOIN carriers cr ON s.carrier_id = cr.id ${baseWhere}
+      ORDER BY s.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+
+    const [countResult, dataResult] = await Promise.all([
+      db.query(countQuery, params),
+      db.query(dataQuery, [...params, limitNum, offset])
+    ]);
+
+    const total = parseInt(countResult.rows[0].count);
+    res.json({
+      data: dataResult.rows,
+      pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) }
+    });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -34,6 +50,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { tracking_number, customer_id, carrier_id, route_id, origin, destination, mode, weight_kg, volume_cbm, status, quoted_price, actual_cost, pickup_date, delivery_date } = req.body;
+    if (!customer_id || !carrier_id || !route_id) return res.status(400).json({ error: 'customer_id, carrier_id, and route_id are required' });
     const result = await db.query(
       `INSERT INTO shipments (tracking_number, customer_id, carrier_id, route_id, origin, destination, mode, weight_kg, volume_cbm, status, quoted_price, actual_cost, pickup_date, delivery_date)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,

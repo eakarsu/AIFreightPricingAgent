@@ -1,18 +1,26 @@
 const router = require('express').Router();
 const db = require('../db');
-const { askAI } = require('../services/openrouter');
+const { askAI, parseAIJson } = require('../services/openrouter');
+const { aiRateLimiter } = require('../middleware/rateLimiter');
+const { persistAIResult } = require('../services/aiResults');
 
 router.get('/', async (req, res) => {
   try {
     const { search, report_type, severity } = req.query;
-    let query = 'SELECT * FROM market_intelligence WHERE 1=1';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const offset = (page - 1) * limit;
+    let where = 'WHERE 1=1';
     const params = [];
-    if (search) { params.push(`%${search}%`); query += ` AND (title ILIKE $${params.length} OR region ILIKE $${params.length})`; }
-    if (report_type) { params.push(report_type); query += ` AND report_type = $${params.length}`; }
-    if (severity) { params.push(severity); query += ` AND severity = $${params.length}`; }
-    query += ' ORDER BY report_date DESC, created_at DESC';
-    const result = await db.query(query, params);
-    res.json(result.rows);
+    if (search) { params.push(`%${search}%`); where += ` AND (title ILIKE $${params.length} OR region ILIKE $${params.length})`; }
+    if (report_type) { params.push(report_type); where += ` AND report_type = $${params.length}`; }
+    if (severity) { params.push(severity); where += ` AND severity = $${params.length}`; }
+    const dataParams = [...params, limit, offset];
+    const dataQuery = `SELECT * FROM market_intelligence ${where} ORDER BY report_date DESC, created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    const countQuery = `SELECT COUNT(*) FROM market_intelligence ${where}`;
+    const [data, count] = await Promise.all([db.query(dataQuery, dataParams), db.query(countQuery, params)]);
+    const total = parseInt(count.rows[0].count);
+    res.json({ data: data.rows, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -38,30 +46,22 @@ router.post('/', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/analyze', async (req, res) => {
+router.post('/analyze', aiRateLimiter, async (req, res) => {
   try {
     const { region, mode, timeframe } = req.body;
 
-    const systemPrompt = `You are a freight market intelligence analyst for a global logistics platform. Provide comprehensive, data-driven market analysis. Structure your response with clear sections:
-
-**Market Overview**: Current state of the market
-**Rate Trends**: Recent price movements with specific percentages
-**Capacity Outlook**: Supply and demand dynamics
-**Key Disruptions**: Events impacting the market
-**30-Day Forecast**: Expected trends
-**Recommended Actions**: Specific actionable recommendations
-
-Use specific numbers, percentages, and data points to make the analysis concrete and actionable.`;
-
-    const userPrompt = `Analyze the freight market for:
-- Region: ${region || 'Global'}
-- Transport Mode: ${mode || 'All modes'}
-- Timeframe: ${timeframe || 'Current quarter'}
-
-Provide a detailed market intelligence report.`;
+    const systemPrompt = `You are a freight market intelligence analyst. Return ONLY valid JSON: {market_overview, rate_trends: [{period, change_pct, direction}], capacity_outlook, key_disruptions (array), forecast_30d, recommended_actions (array), severity (info|warn|critical), summary}.`;
+    const userPrompt = JSON.stringify({ region: region || 'Global', mode: mode || 'All modes', timeframe: timeframe || 'Current quarter' });
 
     const aiResponse = await askAI(systemPrompt, userPrompt);
-    res.json({ ai_analysis: aiResponse, region, mode, timeframe });
+    const parsed = parseAIJson(aiResponse);
+
+    await persistAIResult({
+      userId: req.user?.id, entityType: 'market_intelligence', entityId: null,
+      analysisType: 'analyze', raw: aiResponse, parsed
+    });
+
+    res.json({ ai_analysis: aiResponse, parsed, region, mode, timeframe });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

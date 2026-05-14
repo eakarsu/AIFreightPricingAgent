@@ -23,6 +23,33 @@ import PricingRules from './pages/PricingRules';
 import PricingRuleDetail from './pages/PricingRuleDetail';
 import AuditTrail from './pages/AuditTrail';
 import AuditTrailDetail from './pages/AuditTrailDetail';
+import AIResults from './pages/AIResults';
+import AgentQuote from './pages/AgentQuote';
+import LaneElasticity from './pages/LaneElasticity';
+import AIPricingTools from './pages/AIPricingTools';
+import BacklogTools from './pages/BacklogTools';
+import RenewalAlerts from './pages/RenewalAlerts';
+import PortalQuote from './pages/PortalQuote';
+import Register from './pages/Register';
+
+// === Batch 04 Gaps & Frontend Mounts ===
+import CfAgenticSpotMarketTradingAgentMonito from './pages/CfAgenticSpotMarketTradingAgentMonito';
+import CfMultimodalOptimizationSolverAcrossTr from './pages/CfMultimodalOptimizationSolverAcrossTr';
+import CfCarrierComplianceSustainabilityTracki from './pages/CfCarrierComplianceSustainabilityTracki';
+import CfSupplyChainFinanceIntegrationRecomme from './pages/CfSupplyChainFinanceIntegrationRecomme';
+import CfCustomerDemandForecastingLaneCapacit from './pages/CfCustomerDemandForecastingLaneCapacit';
+import CfVisionBasedDamageAssessmentAccepting from './pages/CfVisionBasedDamageAssessmentAccepting';
+import GapNoDynamicRateCalculatorEndpointReal from './pages/GapNoDynamicRateCalculatorEndpointReal';
+import GapNoCarrierCapacityForecast from './pages/GapNoCarrierCapacityForecast';
+import GapNoContractOptimizationRecommender from './pages/GapNoContractOptimizationRecommender';
+import GapNoFraudDetectionOnShipmentPatterns from './pages/GapNoFraudDetectionOnShipmentPatterns';
+import GapNoLaneProfitabilityAnalyzer from './pages/GapNoLaneProfitabilityAnalyzer';
+import GapNoModeOfShipmentRecommenderAir from './pages/GapNoModeOfShipmentRecommenderAir';
+import GapLimitedNotificationsOnly2FileRefere from './pages/GapLimitedNotificationsOnly2FileRefere';
+import GapNoWebhookReceiversdispatchers from './pages/GapNoWebhookReceiversdispatchers';
+import GapNoCarrierPerformanceScorecardReports from './pages/GapNoCarrierPerformanceScorecardReports';
+import GapNoExceptionclaimManagementModule from './pages/GapNoExceptionclaimManagementModule';
+import GapNoWebsocketRealTimeShipmentTracking from './pages/GapNoWebsocketRealTimeShipmentTracking';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -35,6 +62,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/portal/quote/:token" element={<PortalQuote />} />
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="rate-quotes" element={<RateQuotes />} />
@@ -57,7 +86,32 @@ export default function App() {
         <Route path="pricing-rules/:id" element={<PricingRuleDetail />} />
         <Route path="audit-trail" element={<AuditTrail />} />
         <Route path="audit-trail/:id" element={<AuditTrailDetail />} />
+        <Route path="ai-results" element={<AIResults />} />
+        <Route path="agent-quote" element={<AgentQuote />} />
+        <Route path="lane-elasticity" element={<LaneElasticity />} />
+        <Route path="renewal-alerts" element={<RenewalAlerts />} />
+        <Route path="ai-pricing-tools" element={<AIPricingTools />} />
+        <Route path="backlog-tools" element={<BacklogTools />} />
       </Route>
-    </Routes>
+    
+          {/* // === Batch 04 Gaps & Frontend Mounts === */}
+          <Route path="/cf-agentic-spot-market-trading-agent-monito" element={<CfAgenticSpotMarketTradingAgentMonito />} />
+          <Route path="/cf-multimodal-optimization-solver-across-tr" element={<CfMultimodalOptimizationSolverAcrossTr />} />
+          <Route path="/cf-carrier-compliance-sustainability-tracki" element={<CfCarrierComplianceSustainabilityTracki />} />
+          <Route path="/cf-supply-chain-finance-integration-recomme" element={<CfSupplyChainFinanceIntegrationRecomme />} />
+          <Route path="/cf-customer-demand-forecasting-lane-capacit" element={<CfCustomerDemandForecastingLaneCapacit />} />
+          <Route path="/cf-vision-based-damage-assessment-accepting" element={<CfVisionBasedDamageAssessmentAccepting />} />
+          <Route path="/gap-no-dynamic-rate-calculator-endpoint-real" element={<GapNoDynamicRateCalculatorEndpointReal />} />
+          <Route path="/gap-no-carrier-capacity-forecast" element={<GapNoCarrierCapacityForecast />} />
+          <Route path="/gap-no-contract-optimization-recommender" element={<GapNoContractOptimizationRecommender />} />
+          <Route path="/gap-no-fraud-detection-on-shipment-patterns" element={<GapNoFraudDetectionOnShipmentPatterns />} />
+          <Route path="/gap-no-lane-profitability-analyzer" element={<GapNoLaneProfitabilityAnalyzer />} />
+          <Route path="/gap-no-mode-of-shipment-recommender-air" element={<GapNoModeOfShipmentRecommenderAir />} />
+          <Route path="/gap-limited-notifications-only-2-file-refere" element={<GapLimitedNotificationsOnly2FileRefere />} />
+          <Route path="/gap-no-webhook-receiversdispatchers" element={<GapNoWebhookReceiversdispatchers />} />
+          <Route path="/gap-no-carrier-performance-scorecard-reports" element={<GapNoCarrierPerformanceScorecardReports />} />
+          <Route path="/gap-no-exceptionclaim-management-module" element={<GapNoExceptionclaimManagementModule />} />
+          <Route path="/gap-no-websocket-real-time-shipment-tracking" element={<GapNoWebsocketRealTimeShipmentTracking />} />
+</Routes>
   );
 }
