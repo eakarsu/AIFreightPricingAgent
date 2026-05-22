@@ -97,6 +97,7 @@ app.use('/api/backlog', require('./routes/backlogPass5'));
 app.use('/api/spot-market', require('./routes/spotMarketAgent'));
 app.use('/api/multimodal-optimize', require('./routes/multimodalOptimizer'));
 app.use('/api/damage-vision', require('./routes/damageVisionAssessor'));
+app.use('/api/detention-demurrage-predictor', require('./routes/detentionDemurragePredictor'));
 
 // ── AI Results listing ──
 app.get('/api/ai-results', async (req, res) => {

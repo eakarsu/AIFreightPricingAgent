@@ -31,6 +31,7 @@ import BacklogTools from './pages/BacklogTools';
 import RenewalAlerts from './pages/RenewalAlerts';
 import PortalQuote from './pages/PortalQuote';
 import Register from './pages/Register';
+import DetentionDemurragePredictor from './pages/DetentionDemurragePredictor';
 
 // === Batch 04 Gaps & Frontend Mounts ===
 import CfAgenticSpotMarketTradingAgentMonito from './pages/CfAgenticSpotMarketTradingAgentMonito';
@@ -51,6 +52,11 @@ import GapNoCarrierPerformanceScorecardReports from './pages/GapNoCarrierPerform
 import GapNoExceptionclaimManagementModule from './pages/GapNoExceptionclaimManagementModule';
 import GapNoWebsocketRealTimeShipmentTracking from './pages/GapNoWebsocketRealTimeShipmentTracking';
 
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
+
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
@@ -61,6 +67,10 @@ function ProtectedRoute({ children }) {
 export default function App() {
   return (
     <Routes>
+        <Route path="/insights/timeline" element={<ProtectedRoute><TimelineView /></ProtectedRoute>} />
+        <Route path="/codex/custom-viz" element={<ProtectedRoute><CodexCustomVizFeature /></ProtectedRoute>} />
+        <Route path="/codex/operations" element={<ProtectedRoute><CodexOperationsFeature /></ProtectedRoute>} />
+
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/portal/quote/:token" element={<PortalQuote />} />
@@ -92,6 +102,7 @@ export default function App() {
         <Route path="renewal-alerts" element={<RenewalAlerts />} />
         <Route path="ai-pricing-tools" element={<AIPricingTools />} />
         <Route path="backlog-tools" element={<BacklogTools />} />
+        <Route path="detention-demurrage-predictor" element={<DetentionDemurragePredictor />} />
       </Route>
     
           {/* // === Batch 04 Gaps & Frontend Mounts === */}
