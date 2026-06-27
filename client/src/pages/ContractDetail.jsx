@@ -27,8 +27,8 @@ const formatCurrency = (value) => {
 
 const editFields = [
   { name: 'contract_number', label: 'Contract Number', type: 'text', required: true },
-  { name: 'customer_id', label: 'Customer ID', type: 'number', required: true },
-  { name: 'carrier_id', label: 'Carrier ID', type: 'number', required: true },
+  { name: 'customer_id', label: 'Customer', type: 'number', required: true },
+  { name: 'carrier_id', label: 'Carrier', type: 'number', required: true },
   { name: 'start_date', label: 'Start Date', type: 'date', required: true },
   { name: 'end_date', label: 'End Date', type: 'date', required: true },
   { name: 'mode', label: 'Mode', type: 'select', options: modeOptions, required: true },

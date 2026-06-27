@@ -27,8 +27,8 @@ const formatCurrency = (value) => {
 
 const formFields = [
   { name: 'contract_number', label: 'Contract Number', type: 'text', required: true },
-  { name: 'customer_id', label: 'Customer ID', type: 'number', required: true },
-  { name: 'carrier_id', label: 'Carrier ID', type: 'number', required: true },
+  { name: 'customer_id', label: 'Customer', type: 'number', required: true },
+  { name: 'carrier_id', label: 'Carrier', type: 'number', required: true },
   { name: 'start_date', label: 'Start Date', type: 'date', required: true },
   { name: 'end_date', label: 'End Date', type: 'date', required: true },
   { name: 'mode', label: 'Mode', type: 'select', options: modeOptions, required: true },
@@ -65,6 +65,7 @@ export default function Contracts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchContracts = useCallback(async () => {
@@ -89,14 +90,16 @@ export default function Contracts() {
     navigate(`/contracts/${row.id}`);
   };
 
-  const handleCreate = async (formData) => {
+  const handleSave = async (formData) => {
     try {
       setSubmitting(true);
-      await api.post('/contracts', formData);
+      if (editingRow) await api.put(`/contracts/${editingRow.id}`, formData);
+      else await api.post('/contracts', formData);
       setShowModal(false);
+      setEditingRow(null);
       fetchContracts();
     } catch (err) {
-      console.error('Failed to create contract:', err);
+      console.error('Failed to save contract:', err);
       throw err;
     } finally {
       setSubmitting(false);
@@ -107,7 +110,7 @@ export default function Contracts() {
     <div className="page-container">
       <div className="page-header">
         <h1>Contracts</h1>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={() => { setEditingRow(null); setShowModal(true); }}>
           New Contract
         </button>
       </div>
@@ -115,18 +118,23 @@ export default function Contracts() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <DataTable
+        deleteEndpoint="/contracts"
         columns={columns}
         data={contracts}
         loading={loading}
         onRowClick={handleRowClick}
+        onEdit={(row) => { setEditingRow(row); setShowModal(true); }}
       />
 
       {showModal && (
         <FormModal
-          title="New Contract"
+        deleteEndpoint="/contracts"
+        onDeleted={() => window.location.reload()}
+          title={editingRow ? 'Edit Contract' : 'New Contract'}
           fields={formFields}
-          onSubmit={handleCreate}
-          onClose={() => setShowModal(false)}
+          initialData={editingRow || {}}
+          onSubmit={handleSave}
+          onClose={() => { setShowModal(false); setEditingRow(null); }}
           submitting={submitting}
         />
       )}

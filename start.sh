@@ -18,17 +18,54 @@ cd "$PROJECT_DIR"
 
 # Load .env
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | grep -v '^\s*$' | xargs)
+  set -a
+  source .env
+  set +a
   echo -e "${GREEN}✓ Loaded .env configuration${NC}"
 else
   echo -e "${RED}✗ .env file not found! Please create one.${NC}"
   exit 1
 fi
 
+if ! command -v node &> /dev/null; then
+  echo -e "${RED}✗ Node.js not found. Please install it first.${NC}"
+  exit 1
+fi
+
+kill_port() {
+  local port="$1"
+  local pids
+  pids="$(lsof -ti :"$port" 2>/dev/null || true)"
+  if [ -n "$pids" ]; then
+    echo "$pids" | xargs kill -9 2>/dev/null || true
+  fi
+
+  for _ in 1 2 3 4 5; do
+    sleep 1
+    pids="$(lsof -ti :"$port" 2>/dev/null || true)"
+    [ -z "$pids" ] && return 0
+    echo "$pids" | xargs kill -9 2>/dev/null || true
+  done
+
+  pids="$(lsof -ti :"$port" 2>/dev/null || true)"
+  echo -e "${RED}✗ Port $port is still in use by PID(s): $pids${NC}"
+  exit 1
+}
+
+kill_project_processes() {
+  local pids
+  pids="$(ps -axo pid=,command= | grep "$PROJECT_DIR" | grep -E 'node_modules/.bin/(nodemon|vite)|@esbuild' | awk '{print $1}' || true)"
+  if [ -n "$pids" ]; then
+    echo "$pids" | xargs kill -9 2>/dev/null || true
+    sleep 1
+  fi
+}
+
 # Kill processes on ports 3000 and 3001
 echo -e "${YELLOW}→ Cleaning up ports 3000 and 3001...${NC}"
-lsof -ti :3000 2>/dev/null | xargs kill -9 2>/dev/null || true
-lsof -ti :3001 2>/dev/null | xargs kill -9 2>/dev/null || true
+kill_project_processes
+kill_port 3000
+kill_port 3001
 echo -e "${GREEN}✓ Ports cleared${NC}"
 
 # Check PostgreSQL
@@ -53,13 +90,39 @@ echo -e "${GREEN}✓ PostgreSQL is running${NC}"
 
 # Create database
 echo -e "${YELLOW}→ Setting up database...${NC}"
-PGPASSWORD=${DB_PASSWORD} psql -h ${DB_HOST:-localhost} -p ${DB_PORT:-5432} -U ${DB_USER:-postgres} -tc "SELECT 1 FROM pg_database WHERE datname = '${DB_NAME}'" | grep -q 1 || \
-  PGPASSWORD=${DB_PASSWORD} psql -h ${DB_HOST:-localhost} -p ${DB_PORT:-5432} -U ${DB_USER:-postgres} -c "CREATE DATABASE ${DB_NAME}"
+if [ -n "${DATABASE_URL:-}" ]; then
+  DB_NAME="${DB_NAME:-$(node -e "const u = new URL(process.env.DATABASE_URL); console.log(decodeURIComponent(u.pathname.replace(/^\\//, '')));")}"
+  DATABASE_ADMIN_URL="$(node -e "const u = new URL(process.env.DATABASE_URL); u.pathname = '/postgres'; u.search = ''; console.log(u.toString());")"
+
+  if [ -z "$DB_NAME" ]; then
+    echo -e "${RED}✗ Could not determine database name from DATABASE_URL.${NC}"
+    exit 1
+  fi
+  if [[ ! "$DB_NAME" =~ ^[A-Za-z0-9_]+$ ]]; then
+    echo -e "${RED}✗ Database name '$DB_NAME' is invalid. Use only letters, numbers, and underscores.${NC}"
+    exit 1
+  fi
+
+  psql "$DATABASE_ADMIN_URL" -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 || \
+    psql "$DATABASE_ADMIN_URL" -c "CREATE DATABASE $DB_NAME"
+else
+  DB_NAME="${DB_NAME:-aifreightpricingagent_db}"
+  if [[ ! "$DB_NAME" =~ ^[A-Za-z0-9_]+$ ]]; then
+    echo -e "${RED}✗ Database name '$DB_NAME' is invalid. Use only letters, numbers, and underscores.${NC}"
+    exit 1
+  fi
+  PGPASSWORD="${DB_PASSWORD:-}" psql -h "${DB_HOST:-localhost}" -p "${DB_PORT:-5432}" -U "${DB_USER:-postgres}" -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 || \
+    PGPASSWORD="${DB_PASSWORD:-}" psql -h "${DB_HOST:-localhost}" -p "${DB_PORT:-5432}" -U "${DB_USER:-postgres}" -c "CREATE DATABASE $DB_NAME"
+fi
 echo -e "${GREEN}✓ Database '${DB_NAME}' ready${NC}"
 
 # Run schema
 echo -e "${YELLOW}→ Applying schema...${NC}"
-PGPASSWORD=${DB_PASSWORD} psql -h ${DB_HOST:-localhost} -p ${DB_PORT:-5432} -U ${DB_USER:-postgres} -d ${DB_NAME} -f server/schema.sql -q
+if [ -n "${DATABASE_URL:-}" ]; then
+  psql "$DATABASE_URL" -f server/schema.sql -q
+else
+  PGPASSWORD="${DB_PASSWORD:-}" psql -h "${DB_HOST:-localhost}" -p "${DB_PORT:-5432}" -U "${DB_USER:-postgres}" -d "$DB_NAME" -f server/schema.sql -q
+fi
 echo -e "${GREEN}✓ Schema applied${NC}"
 
 # Install server dependencies
@@ -96,8 +159,8 @@ cleanup() {
   echo -e "\n${YELLOW}→ Shutting down...${NC}"
   kill $SERVER_PID 2>/dev/null || true
   kill $CLIENT_PID 2>/dev/null || true
-  lsof -ti :3000 2>/dev/null | xargs kill -9 2>/dev/null || true
-  lsof -ti :3001 2>/dev/null | xargs kill -9 2>/dev/null || true
+  kill_port 3000
+  kill_port 3001
   echo -e "${GREEN}✓ Shutdown complete${NC}"
   exit 0
 }

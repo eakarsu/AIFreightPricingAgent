@@ -1,88 +1,151 @@
-export default function AIResponseCard({ content, title = 'AI Analysis', onRegenerate }) {
-  if (!content) return null;
+import ReactMarkdown from 'react-markdown';
 
-  const renderContent = (text) => {
-    const lines = text.split('\n');
-    return lines.map((line, i) => {
-      // Headers with **bold**
-      if (line.match(/^\*\*[^*]+\*\*:?\s*$/)) {
-        const headerText = line.replace(/\*\*/g, '').replace(/:$/, '');
-        return <h3 key={i} className="text-base font-semibold text-slate-800 mt-4 mb-2 first:mt-0">{headerText}</h3>;
-      }
-      // Bold inline **text**
-      if (line.includes('**')) {
-        const parts = line.split(/(\*\*[^*]+\*\*)/g);
-        return (
-          <p key={i} className="text-sm text-slate-700 mb-1">
-            {parts.map((part, j) =>
-              part.startsWith('**') && part.endsWith('**')
-                ? <strong key={j} className="font-semibold text-slate-900">{part.slice(2, -2)}</strong>
-                : <span key={j}>{part}</span>
+function titleize(value) {
+  return String(value || '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function isEmpty(value) {
+  return value === null || value === undefined || value === '';
+}
+
+function getDisplayPayload(input) {
+  const value = input?.response ?? input?.content ?? input;
+  if (!value || typeof value === 'string') return value;
+  return value.analysis || value.ai_analysis || value.assessment || value.parsed || value.result || value.output || value.summary || value;
+}
+
+function Metric({ label, value }) {
+  if (isEmpty(value) || typeof value === 'object') return null;
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3">
+      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{titleize(label)}</div>
+      <div className="mt-1 break-words text-lg font-semibold text-slate-900">{String(value)}</div>
+    </div>
+  );
+}
+
+function ValueView({ value }) {
+  if (isEmpty(value)) return <span className="text-slate-400">Not provided</span>;
+  if (typeof value === 'string') return <ReactMarkdown>{value}</ReactMarkdown>;
+  if (typeof value === 'number' || typeof value === 'boolean') return <span>{String(value)}</span>;
+
+  if (Array.isArray(value)) {
+    return (
+      <div className="space-y-2">
+        {value.map((item, index) => (
+          <div key={index} className="rounded-lg border border-slate-200 bg-white p-3">
+            {typeof item === 'object' && item !== null ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {Object.entries(item).map(([key, itemValue]) => (
+                  <div key={key}>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{titleize(key)}</div>
+                    <div className="mt-1 text-sm text-slate-700">
+                      <ValueView value={itemValue} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-slate-700">{String(item)}</div>
             )}
-          </p>
-        );
-      }
-      // Numbered list
-      if (line.match(/^\d+\.\s/)) {
-        return (
-          <div key={i} className="flex gap-2 ml-2 mb-1">
-            <span className="text-indigo-500 font-semibold text-sm flex-shrink-0">{line.match(/^\d+/)[0]}.</span>
-            <p className="text-sm text-slate-700">{line.replace(/^\d+\.\s/, '')}</p>
           </div>
-        );
-      }
-      // Bullet list
-      if (line.match(/^[-•]\s/)) {
-        const text = line.replace(/^[-•]\s/, '');
-        // Highlight dollar amounts and percentages
-        const highlighted = text.replace(/(\$[\d,]+(?:\.\d{2})?)/g, '<money>$1</money>')
-          .replace(/([\+\-]?\d+(?:\.\d+)?%)/g, '<pct>$1</pct>');
-        return (
-          <div key={i} className="flex gap-2 ml-4 mb-1">
-            <span className="text-indigo-400 mt-1.5 flex-shrink-0">
-              <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
-            </span>
-            <p className="text-sm text-slate-700" dangerouslySetInnerHTML={{
-              __html: highlighted
-                .replace(/<money>([^<]+)<\/money>/g, '<span class="bg-emerald-100 text-emerald-800 px-1 rounded font-medium">$1</span>')
-                .replace(/<pct>([^<]+)<\/pct>/g, (_, val) => {
-                  const isNeg = val.startsWith('-');
-                  const cls = isNeg ? 'text-red-600' : 'text-emerald-600';
-                  const arrow = isNeg ? '↓' : '↑';
-                  return `<span class="${cls} font-medium">${arrow} ${val}</span>`;
-                })
-            }} />
-          </div>
-        );
-      }
-      // Empty line
-      if (!line.trim()) return <div key={i} className="h-2" />;
-      // Regular paragraph
-      return <p key={i} className="text-sm text-slate-700 mb-1">{line}</p>;
-    });
-  };
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-xl border border-indigo-200 overflow-hidden">
-      <div className="px-5 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <span className="text-white font-semibold text-sm">{title}</span>
-          <span className="bg-white/20 text-white/90 text-xs px-2 py-0.5 rounded-full">AI-Generated</span>
+    <div className="grid gap-3 md:grid-cols-2">
+      {Object.entries(value).map(([key, itemValue]) => (
+        <div key={key} className="rounded-lg border border-slate-200 bg-white p-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{titleize(key)}</div>
+          <div className="mt-1 text-sm text-slate-700">
+            <ValueView value={itemValue} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function AIResponseCard({ content, response, title = 'AI Analysis', onRegenerate }) {
+  const payload = getDisplayPayload({ content, response });
+  if (!payload) return null;
+
+  // External data feeds (DOE/EIA, FMCSA, DAT, etc.) carry provider/source — they are
+  // live API pulls, not LLM output, so label them accurately.
+  const isExternalFeed = payload && typeof payload === 'object' && (payload.provider || payload.source);
+  const subtitle = isExternalFeed
+    ? `Live external feed${payload.provider ? ` · ${payload.provider}` : ''}`
+    : 'AI-generated recommendation';
+
+  const error = payload?.error || response?.error;
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div className="font-semibold">{error}</div>
+        {(payload?.hint || response?.hint) && <div className="mt-2 text-red-700">{payload?.hint || response?.hint}</div>}
+      </div>
+    );
+  }
+
+  if (typeof payload === 'string') {
+    return (
+      <div className="overflow-hidden rounded-xl border border-indigo-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between bg-indigo-600 px-5 py-3">
+          <div>
+            <div className="text-sm font-semibold text-white">{title}</div>
+            <div className="text-xs text-indigo-100">{subtitle}</div>
+          </div>
+          {onRegenerate && (
+            <button type="button" onClick={onRegenerate} className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20">
+              Regenerate
+            </button>
+          )}
+        </div>
+        <div className="prose prose-slate max-w-none p-5 text-sm">
+          <ReactMarkdown>{payload}</ReactMarkdown>
+        </div>
+      </div>
+    );
+  }
+
+  const primitiveEntries = Object.entries(payload).filter(([, value]) => typeof value !== 'object' || value === null);
+  const sectionEntries = Object.entries(payload).filter(([, value]) => typeof value === 'object' && value !== null);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-indigo-200 bg-gradient-to-br from-white via-indigo-50/40 to-white shadow-sm">
+      <div className="flex items-center justify-between bg-indigo-600 px-5 py-3">
+        <div>
+          <div className="text-sm font-semibold text-white">{title}</div>
+          <div className="text-xs text-indigo-100">{subtitle}</div>
         </div>
         {onRegenerate && (
-          <button onClick={onRegenerate} className="text-white/80 hover:text-white text-xs flex items-center gap-1 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+          <button type="button" onClick={onRegenerate} className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20">
             Regenerate
           </button>
         )}
       </div>
-      <div className="p-5">
-        {renderContent(content)}
+
+      <div className="space-y-4 p-5">
+        {primitiveEntries.length > 0 && (
+          <div className="grid gap-3 md:grid-cols-3">
+            {primitiveEntries.map(([key, value]) => <Metric key={key} label={key} value={value} />)}
+          </div>
+        )}
+
+        {sectionEntries.map(([key, value]) => (
+          <section key={key} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h3 className="mb-3 text-sm font-semibold text-slate-900">{titleize(key)}</h3>
+            <div className="text-sm text-slate-700">
+              <ValueView value={value} />
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );

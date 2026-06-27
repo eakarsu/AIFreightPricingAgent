@@ -8,7 +8,7 @@ import FormModal from '../components/FormModal';
 
 const quoteFormFields = [
   { name: 'quote_number', label: 'Quote Number', type: 'text', required: true },
-  { name: 'customer_id', label: 'Customer ID', type: 'number', required: true },
+  { name: 'customer_id', label: 'Customer', type: 'number', required: true },
   { name: 'origin', label: 'Origin', type: 'text', required: true },
   { name: 'destination', label: 'Destination', type: 'text', required: true },
   {
@@ -63,7 +63,7 @@ const aiQuoteFormFields = [
   },
   { name: 'weight_kg', label: 'Weight (kg)', type: 'number', required: true },
   { name: 'volume_cbm', label: 'Volume (CBM)', type: 'number' },
-  { name: 'customer_id', label: 'Customer ID', type: 'number' },
+  { name: 'customer_id', label: 'Customer', type: 'number' },
 ];
 
 const formatCurrency = (value) => {
@@ -73,19 +73,19 @@ const formatCurrency = (value) => {
 
 const columns = [
   { key: 'quote_number', header: 'Quote #' },
-  { key: 'customer_name', header: 'Customer', render: (row) => row.customer_name || `#${row.customer_id}` },
+  { key: 'customer_name', header: 'Customer', render: (value, row) => value || `#${row.customer_id}` },
   { key: 'origin', header: 'Origin' },
   { key: 'destination', header: 'Destination' },
-  { key: 'mode', header: 'Mode', render: (row) => row.mode?.charAt(0).toUpperCase() + row.mode?.slice(1) },
-  { key: 'weight_kg', header: 'Weight (kg)', render: (row) => row.weight_kg?.toLocaleString() ?? '-' },
-  { key: 'base_rate', header: 'Base Rate ($)', render: (row) => formatCurrency(row.base_rate) },
-  { key: 'ai_rate', header: 'AI Rate ($)', render: (row) => formatCurrency(row.ai_rate) },
-  { key: 'final_rate', header: 'Final Rate ($)', render: (row) => formatCurrency(row.final_rate) },
-  { key: 'margin_pct', header: 'Margin (%)', render: (row) => row.margin_pct != null ? `${row.margin_pct}%` : '-' },
+  { key: 'mode', header: 'Mode', render: (value) => value?.charAt(0).toUpperCase() + value?.slice(1) },
+  { key: 'weight_kg', header: 'Weight (kg)', render: (value) => value?.toLocaleString() ?? '-' },
+  { key: 'base_rate', header: 'Base Rate ($)', render: (value) => formatCurrency(value) },
+  { key: 'ai_rate', header: 'AI Rate ($)', render: (value) => formatCurrency(value) },
+  { key: 'final_rate', header: 'Final Rate ($)', render: (value) => formatCurrency(value) },
+  { key: 'margin_pct', header: 'Margin (%)', render: (value) => value != null ? `${value}%` : '-' },
   {
     key: 'status',
     header: 'Status',
-    render: (row) => <StatusBadge status={row.status} />,
+    render: (value) => <StatusBadge status={value} />,
   },
 ];
 
@@ -96,6 +96,7 @@ export default function RateQuotes() {
   const [error, setError] = useState(null);
 
   const [showNewModal, setShowNewModal] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiResponse, setAiResponse] = useState(null);
@@ -123,9 +124,11 @@ export default function RateQuotes() {
     navigate(`/rate-quotes/${row.id}`);
   };
 
-  const handleNewQuoteSubmit = async (data) => {
-    await api.post('/rate-quotes', data);
+  const handleQuoteSubmit = async (data) => {
+    if (editingRow) await api.put(`/rate-quotes/${editingRow.id}`, data);
+    else await api.post('/rate-quotes', data);
     setShowNewModal(false);
+    setEditingRow(null);
     fetchQuotes();
   };
 
@@ -183,7 +186,7 @@ export default function RateQuotes() {
           >
             Generate AI Quote
           </button>
-          <button className="btn btn-primary" onClick={() => setShowNewModal(true)}>
+          <button className="btn btn-primary" onClick={() => { setEditingRow(null); setShowNewModal(true); }}>
             New Quote
           </button>
         </div>
@@ -199,18 +202,23 @@ export default function RateQuotes() {
         <p>Loading rate quotes...</p>
       ) : (
         <DataTable
+        deleteEndpoint="/rate-quotes"
           columns={columns}
           data={quotes}
           onRowClick={handleRowClick}
+          onEdit={(row) => { setEditingRow(row); setShowNewModal(true); }}
         />
       )}
 
       {showNewModal && (
         <FormModal
-          title="New Rate Quote"
+        deleteEndpoint="/rate-quotes"
+        onDeleted={() => window.location.reload()}
+          title={editingRow ? 'Edit Rate Quote' : 'New Rate Quote'}
           fields={quoteFormFields}
-          onSubmit={handleNewQuoteSubmit}
-          onClose={() => setShowNewModal(false)}
+          initialData={editingRow || {}}
+          onSubmit={handleQuoteSubmit}
+          onClose={() => { setShowNewModal(false); setEditingRow(null); }}
         />
       )}
 
@@ -247,6 +255,7 @@ export default function RateQuotes() {
             <div style={{ marginTop: '1rem' }}>
               <AIResponseCard response={aiResponse} />
               <button
+                type="button"
                 className="btn btn-primary"
                 style={{ marginTop: '0.75rem' }}
                 onClick={handleSaveAIQuote}

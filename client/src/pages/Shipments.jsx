@@ -27,9 +27,9 @@ const formatCurrency = (value) => {
 
 const formFields = [
   { name: 'tracking_number', label: 'Tracking Number', type: 'text', required: true },
-  { name: 'customer_id', label: 'Customer ID', type: 'number', required: true },
-  { name: 'carrier_id', label: 'Carrier ID', type: 'number', required: true },
-  { name: 'route_id', label: 'Route ID', type: 'number' },
+  { name: 'customer_id', label: 'Customer', type: 'number', required: true },
+  { name: 'carrier_id', label: 'Carrier', type: 'number', required: true },
+  { name: 'route_id', label: 'Route', type: 'number' },
   { name: 'origin', label: 'Origin', type: 'text', required: true },
   { name: 'destination', label: 'Destination', type: 'text', required: true },
   { name: 'mode', label: 'Mode', type: 'select', options: modeOptions, required: true },
@@ -73,6 +73,7 @@ export default function Shipments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchShipments = useCallback(async () => {
@@ -97,14 +98,16 @@ export default function Shipments() {
     navigate(`/shipments/${row.id}`);
   };
 
-  const handleCreate = async (formData) => {
+  const handleSave = async (formData) => {
     try {
       setSubmitting(true);
-      await api.post('/shipments', formData);
+      if (editingRow) await api.put(`/shipments/${editingRow.id}`, formData);
+      else await api.post('/shipments', formData);
       setShowModal(false);
+      setEditingRow(null);
       fetchShipments();
     } catch (err) {
-      console.error('Failed to create shipment:', err);
+      console.error('Failed to save shipment:', err);
       throw err;
     } finally {
       setSubmitting(false);
@@ -115,7 +118,7 @@ export default function Shipments() {
     <div className="page-container">
       <div className="page-header">
         <h1>Shipments</h1>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={() => { setEditingRow(null); setShowModal(true); }}>
           New Shipment
         </button>
       </div>
@@ -123,18 +126,23 @@ export default function Shipments() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <DataTable
+        deleteEndpoint="/shipments"
         columns={columns}
         data={shipments}
         loading={loading}
         onRowClick={handleRowClick}
+        onEdit={(row) => { setEditingRow(row); setShowModal(true); }}
       />
 
       {showModal && (
         <FormModal
-          title="New Shipment"
+        deleteEndpoint="/shipments"
+        onDeleted={() => window.location.reload()}
+          title={editingRow ? 'Edit Shipment' : 'New Shipment'}
           fields={formFields}
-          onSubmit={handleCreate}
-          onClose={() => setShowModal(false)}
+          initialData={editingRow || {}}
+          onSubmit={handleSave}
+          onClose={() => { setShowModal(false); setEditingRow(null); }}
           submitting={submitting}
         />
       )}

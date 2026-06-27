@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AIResponseCard from '../components/AIResponseCard';
 
 // === Batch 04 Gaps & Frontend Mounts ===
 // Auto-generated page for: No contract-optimization recommender
@@ -88,12 +89,7 @@ export default function GapNoContractOptimizationRecommender() {
         </button>
       </form>
       {error && <div style={{ background: '#fee', color: '#900', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem' }}>{error}</div>}
-      {result && (
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: '8px' }}>
-          <h3 style={{ marginTop: 0 }}>Result</h3>
-          <pre style={{ whiteSpace: 'pre-wrap', margin: 0, fontSize: '0.9rem' }}>{typeof result === 'string' ? result : JSON.stringify(result, null, 2)}</pre>
-        </div>
-      )}
+      {result && <AIResponseCard response={result} title="AI Result" />}
     </div>
   );
 }

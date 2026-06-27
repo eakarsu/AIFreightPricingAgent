@@ -1,12 +1,28 @@
-import { useState } from 'react';
-import { agentQuote, generateQuote } from '../api/client';
-import ReactMarkdown from 'react-markdown';
+import { useEffect, useState } from 'react';
+import api, { agentQuote, generateQuote } from '../api/client';
+import AIResponseCard from '../components/AIResponseCard';
+
+function normalizeRows(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+}
 
 export default function AgentQuote() {
   const [form, setForm] = useState({ origin: '', destination: '', mode: 'truckload', weight_kg: '', volume_cbm: '', customer_id: '' });
   const [mode, setMode] = useState('agent'); // 'agent' or 'simple'
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [customers, setCustomers] = useState([]);
+
+  useEffect(() => {
+    api.get('/customers')
+      .then((response) => setCustomers(normalizeRows(response.data)))
+      .catch(() => setCustomers([]));
+  }, []);
 
   const submit = async () => {
     setLoading(true); setResult(null);
@@ -42,7 +58,14 @@ export default function AgentQuote() {
           <option value="air">Air</option>
           <option value="rail">Rail</option>
         </select>
-        <input type="number" placeholder="Customer ID (optional)" value={form.customer_id} onChange={e => setForm({ ...form, customer_id: e.target.value })} className="px-3 py-2 border rounded" />
+        <select value={form.customer_id} onChange={e => setForm({ ...form, customer_id: e.target.value })} className="px-3 py-2 border rounded">
+          <option value="">No customer selected</option>
+          {customers.map((customer) => (
+            <option key={customer.id} value={customer.id}>
+              {customer.company_name || customer.contact_name || 'Customer'} (#{customer.id})
+            </option>
+          ))}
+        </select>
         <input type="number" placeholder="Weight (kg)" value={form.weight_kg} onChange={e => setForm({ ...form, weight_kg: e.target.value })} className="px-3 py-2 border rounded" />
         <input type="number" placeholder="Volume (CBM)" value={form.volume_cbm} onChange={e => setForm({ ...form, volume_cbm: e.target.value })} className="px-3 py-2 border rounded" />
       </div>
@@ -69,23 +92,7 @@ export default function AgentQuote() {
                   <div className="text-2xl font-bold">{result.parsed?.confidence_score ?? 'N/A'}</div>
                 </div>
               </div>
-              {result.parsed && (
-                <pre className="bg-slate-900 text-white text-xs p-3 rounded overflow-auto max-h-96">
-                  {JSON.stringify(result.parsed, null, 2)}
-                </pre>
-              )}
-              {result.raw && (
-                <details className="mt-3">
-                  <summary>Raw AI text</summary>
-                  <ReactMarkdown>{result.raw}</ReactMarkdown>
-                </details>
-              )}
-              {result.ai_reasoning && (
-                <details className="mt-3">
-                  <summary>Reasoning</summary>
-                  <ReactMarkdown>{result.ai_reasoning}</ReactMarkdown>
-                </details>
-              )}
+              <AIResponseCard response={result} title="Pricing Agent Recommendation" />
             </>
           )}
         </div>

@@ -120,7 +120,35 @@ router.get('/integrations/doe/fuel-index', async (req, res) => {
     logExt('doe', 'fuel-index', 503, 'DOE_FUEL_API_KEY');
     return res.status(503).json(require503('DOE_FUEL_API_KEY'));
   }
-  res.status(501).json({ error: 'DOE EIA fuel-index integration scaffolded; provider call not yet wired.' });
+  try {
+    // EIA v2 API — US weekly On-Highway Diesel Fuel Price (series EMD_EPD2D_PTE_NUS_DPG)
+    const url = `https://api.eia.gov/v2/seriesid/PET.EMD_EPD2D_PTE_NUS_DPG.W?api_key=${encodeURIComponent(process.env.DOE_FUEL_API_KEY)}`;
+    const r = await fetch(url);
+    if (!r.ok) {
+      logExt('doe', 'fuel-index', r.status, null);
+      return res.status(502).json({ error: `EIA API error (${r.status})` });
+    }
+    const json = await r.json();
+    const rows = (json.response && json.response.data) || [];
+    if (!rows.length) {
+      logExt('doe', 'fuel-index', 502, null);
+      return res.status(502).json({ error: 'EIA returned no data' });
+    }
+    rows.sort((a, b) => (a.period < b.period ? 1 : -1)); // latest first
+    const latest = rows[0];
+    logExt('doe', 'fuel-index', 200, null);
+    res.json({
+      provider: 'EIA',
+      series: 'US On-Highway Diesel Fuel Price (weekly average)',
+      period: latest.period,
+      price_per_gallon: Number(latest.value),
+      units: latest.units || '$/GAL',
+      source: 'U.S. Energy Information Administration',
+    });
+  } catch (err) {
+    logExt('doe', 'fuel-index', 500, null);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get('/integrations/fmcsa/carrier-score', async (req, res) => {

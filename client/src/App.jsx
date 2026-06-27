@@ -26,6 +26,7 @@ import AuditTrailDetail from './pages/AuditTrailDetail';
 import AIResults from './pages/AIResults';
 import AgentQuote from './pages/AgentQuote';
 import LaneElasticity from './pages/LaneElasticity';
+import AIHub from './pages/AIHub';
 import AIPricingTools from './pages/AIPricingTools';
 import BacklogTools from './pages/BacklogTools';
 import RenewalAlerts from './pages/RenewalAlerts';
@@ -97,6 +98,7 @@ export default function App() {
         <Route path="audit-trail" element={<AuditTrail />} />
         <Route path="audit-trail/:id" element={<AuditTrailDetail />} />
         <Route path="ai-results" element={<AIResults />} />
+        <Route path="ai-hub" element={<AIHub />} />
         <Route path="agent-quote" element={<AgentQuote />} />
         <Route path="lane-elasticity" element={<LaneElasticity />} />
         <Route path="renewal-alerts" element={<RenewalAlerts />} />

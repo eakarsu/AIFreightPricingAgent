@@ -55,6 +55,7 @@ export default function PricingRules() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchRules = useCallback(async () => {
@@ -79,14 +80,16 @@ export default function PricingRules() {
     navigate(`/pricing-rules/${row.id}`);
   };
 
-  const handleCreate = async (formData) => {
+  const handleSave = async (formData) => {
     try {
       setSubmitting(true);
-      await api.post('/pricing-rules', formData);
+      if (editingRow) await api.put(`/pricing-rules/${editingRow.id}`, formData);
+      else await api.post('/pricing-rules', formData);
       setShowModal(false);
+      setEditingRow(null);
       fetchRules();
     } catch (err) {
-      console.error('Failed to create pricing rule:', err);
+      console.error('Failed to save pricing rule:', err);
       throw err;
     } finally {
       setSubmitting(false);
@@ -97,7 +100,7 @@ export default function PricingRules() {
     <div className="page-container">
       <div className="page-header">
         <h1>Pricing Rules</h1>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={() => { setEditingRow(null); setShowModal(true); }}>
           New Rule
         </button>
       </div>
@@ -105,18 +108,23 @@ export default function PricingRules() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <DataTable
+        deleteEndpoint="/pricing-rules"
         columns={columns}
         data={rules}
         loading={loading}
         onRowClick={handleRowClick}
+        onEdit={(row) => { setEditingRow(row); setShowModal(true); }}
       />
 
       {showModal && (
         <FormModal
-          title="New Rule"
+        deleteEndpoint="/pricing-rules"
+        onDeleted={() => window.location.reload()}
+          title={editingRow ? 'Edit Rule' : 'New Rule'}
           fields={formFields}
-          onSubmit={handleCreate}
-          onClose={() => setShowModal(false)}
+          initialData={editingRow || {}}
+          onSubmit={handleSave}
+          onClose={() => { setShowModal(false); setEditingRow(null); }}
           submitting={submitting}
         />
       )}

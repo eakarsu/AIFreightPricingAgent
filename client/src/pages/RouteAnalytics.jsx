@@ -77,6 +77,7 @@ export default function RouteAnalytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
 
   const fetchRoutes = useCallback(async () => {
     try {
@@ -95,9 +96,11 @@ export default function RouteAnalytics() {
     fetchRoutes();
   }, [fetchRoutes]);
 
-  const handleCreate = async (formData) => {
-    await api.post('/routes', formData);
+  const handleSave = async (formData) => {
+    if (editingRow) await api.put(`/routes/${editingRow.id}`, formData);
+    else await api.post('/routes', formData);
     setModalOpen(false);
+    setEditingRow(null);
     fetchRoutes();
   };
 
@@ -109,7 +112,7 @@ export default function RouteAnalytics() {
     <div className="page-container">
       <div className="page-header">
         <h1>Route Analytics</h1>
-        <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
+        <button className="btn btn-primary" onClick={() => { setEditingRow(null); setModalOpen(true); }}>
           New Route
         </button>
       </div>
@@ -117,18 +120,23 @@ export default function RouteAnalytics() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <DataTable
+        deleteEndpoint="/routes"
         columns={columns}
         data={routes}
         loading={loading}
         onRowClick={handleRowClick}
+        onEdit={(row) => { setEditingRow(row); setModalOpen(true); }}
       />
 
       <FormModal
+        deleteEndpoint="/routes"
+        onDeleted={() => window.location.reload()}
         open={modalOpen}
-        title="New Route"
+        title={editingRow ? 'Edit Route' : 'New Route'}
         fields={formFields}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleCreate}
+        initialData={editingRow || {}}
+        onClose={() => { setModalOpen(false); setEditingRow(null); }}
+        onSubmit={handleSave}
       />
     </div>
   );

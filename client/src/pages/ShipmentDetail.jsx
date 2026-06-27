@@ -27,9 +27,9 @@ const formatCurrency = (value) => {
 
 const editFields = [
   { name: 'tracking_number', label: 'Tracking Number', type: 'text', required: true },
-  { name: 'customer_id', label: 'Customer ID', type: 'number', required: true },
-  { name: 'carrier_id', label: 'Carrier ID', type: 'number', required: true },
-  { name: 'route_id', label: 'Route ID', type: 'number' },
+  { name: 'customer_id', label: 'Customer', type: 'number', required: true },
+  { name: 'carrier_id', label: 'Carrier', type: 'number', required: true },
+  { name: 'route_id', label: 'Route', type: 'number' },
   { name: 'origin', label: 'Origin', type: 'text', required: true },
   { name: 'destination', label: 'Destination', type: 'text', required: true },
   { name: 'mode', label: 'Mode', type: 'select', options: modeOptions, required: true },

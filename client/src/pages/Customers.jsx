@@ -63,6 +63,7 @@ export default function Customers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchCustomers = useCallback(async () => {
@@ -87,14 +88,16 @@ export default function Customers() {
     navigate(`/customers/${row.id}`);
   };
 
-  const handleCreate = async (formData) => {
+  const handleSave = async (formData) => {
     try {
       setSubmitting(true);
-      await api.post('/customers', formData);
+      if (editingRow) await api.put(`/customers/${editingRow.id}`, formData);
+      else await api.post('/customers', formData);
       setShowModal(false);
+      setEditingRow(null);
       fetchCustomers();
     } catch (err) {
-      console.error('Failed to create customer:', err);
+      console.error('Failed to save customer:', err);
       throw err;
     } finally {
       setSubmitting(false);
@@ -105,7 +108,7 @@ export default function Customers() {
     <div className="page-container">
       <div className="page-header">
         <h1>Customers</h1>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={() => { setEditingRow(null); setShowModal(true); }}>
           New Customer
         </button>
       </div>
@@ -113,18 +116,23 @@ export default function Customers() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <DataTable
+        deleteEndpoint="/customers"
         columns={columns}
         data={customers}
         loading={loading}
         onRowClick={handleRowClick}
+        onEdit={(row) => { setEditingRow(row); setShowModal(true); }}
       />
 
       {showModal && (
         <FormModal
-          title="New Customer"
+        deleteEndpoint="/customers"
+        onDeleted={() => window.location.reload()}
+          title={editingRow ? 'Edit Customer' : 'New Customer'}
           fields={formFields}
-          onSubmit={handleCreate}
-          onClose={() => setShowModal(false)}
+          initialData={editingRow || {}}
+          onSubmit={handleSave}
+          onClose={() => { setShowModal(false); setEditingRow(null); }}
           submitting={submitting}
         />
       )}

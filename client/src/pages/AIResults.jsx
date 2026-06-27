@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAIResults } from '../api/client';
+import AIResponseCard from '../components/AIResponseCard';
 
 export default function AIResults() {
   const [rows, setRows] = useState([]);
@@ -49,18 +50,12 @@ export default function AIResults() {
         </table>
       )}
       {selected && (
-        <div className="mt-6 bg-slate-900 text-white p-4 rounded-lg">
-          <div className="flex justify-between mb-2">
-            <h3>AI Result #{selected.id}</h3>
-            <button onClick={() => setSelected(null)}>Close</button>
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-slate-900">AI Result #{selected.id}</h3>
+            <button onClick={() => setSelected(null)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">Close</button>
           </div>
-          {selected.parsed_data && (
-            <pre className="text-xs overflow-auto max-h-96">{JSON.stringify(selected.parsed_data, null, 2)}</pre>
-          )}
-          <details className="mt-4">
-            <summary>Raw response</summary>
-            <pre className="text-xs whitespace-pre-wrap mt-2">{selected.raw_response}</pre>
-          </details>
+          <AIResponseCard response={selected.parsed_data || selected.raw_response} title={selected.analysis_type || 'AI Result'} />
         </div>
       )}
     </div>

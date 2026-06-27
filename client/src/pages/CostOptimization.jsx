@@ -87,6 +87,7 @@ export default function CostOptimization() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [showAIModal, setShowAIModal] = useState(false);
@@ -117,14 +118,16 @@ export default function CostOptimization() {
     navigate(`/cost-optimization/${row.id}`);
   };
 
-  const handleCreate = async (formData) => {
+  const handleSave = async (formData) => {
     try {
       setSubmitting(true);
-      await api.post('/cost-optimization', formData);
+      if (editingRow) await api.put(`/cost-optimization/${editingRow.id}`, formData);
+      else await api.post('/cost-optimization', formData);
       setShowModal(false);
+      setEditingRow(null);
       fetchItems();
     } catch (err) {
-      console.error('Failed to create optimization:', err);
+      console.error('Failed to save optimization:', err);
       throw err;
     } finally {
       setSubmitting(false);
@@ -181,7 +184,7 @@ export default function CostOptimization() {
           >
             AI Optimize
           </button>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          <button className="btn btn-primary" onClick={() => { setEditingRow(null); setShowModal(true); }}>
             New Optimization
           </button>
         </div>
@@ -190,18 +193,23 @@ export default function CostOptimization() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <DataTable
+        deleteEndpoint="/cost-optimization"
         columns={columns}
         data={items}
         loading={loading}
         onRowClick={handleRowClick}
+        onEdit={(row) => { setEditingRow(row); setShowModal(true); }}
       />
 
       {showModal && (
         <FormModal
-          title="New Optimization"
+        deleteEndpoint="/cost-optimization"
+        onDeleted={() => window.location.reload()}
+          title={editingRow ? 'Edit Optimization' : 'New Optimization'}
           fields={formFields}
-          onSubmit={handleCreate}
-          onClose={() => setShowModal(false)}
+          initialData={editingRow || {}}
+          onSubmit={handleSave}
+          onClose={() => { setShowModal(false); setEditingRow(null); }}
           submitting={submitting}
         />
       )}
@@ -239,6 +247,7 @@ export default function CostOptimization() {
             <div style={{ marginTop: '1rem' }}>
               <AIResponseCard response={aiResponse} />
               <button
+                type="button"
                 className="btn btn-primary"
                 style={{ marginTop: '0.75rem' }}
                 onClick={handleSaveAIResult}

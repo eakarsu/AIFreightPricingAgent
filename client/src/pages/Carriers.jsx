@@ -74,6 +74,7 @@ export default function Carriers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
 
   const fetchCarriers = useCallback(async () => {
     try {
@@ -92,9 +93,11 @@ export default function Carriers() {
     fetchCarriers();
   }, [fetchCarriers]);
 
-  const handleCreate = async (formData) => {
-    await api.post('/carriers', formData);
+  const handleSave = async (formData) => {
+    if (editingRow) await api.put(`/carriers/${editingRow.id}`, formData);
+    else await api.post('/carriers', formData);
     setModalOpen(false);
+    setEditingRow(null);
     fetchCarriers();
   };
 
@@ -106,7 +109,7 @@ export default function Carriers() {
     <div className="page-container">
       <div className="page-header">
         <h1>Carriers</h1>
-        <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
+        <button className="btn btn-primary" onClick={() => { setEditingRow(null); setModalOpen(true); }}>
           New Carrier
         </button>
       </div>
@@ -114,18 +117,23 @@ export default function Carriers() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <DataTable
+        deleteEndpoint="/carriers"
         columns={columns}
         data={carriers}
         loading={loading}
         onRowClick={handleRowClick}
+        onEdit={(row) => { setEditingRow(row); setModalOpen(true); }}
       />
 
       <FormModal
+        deleteEndpoint="/carriers"
+        onDeleted={() => window.location.reload()}
         open={modalOpen}
-        title="New Carrier"
+        title={editingRow ? 'Edit Carrier' : 'New Carrier'}
         fields={formFields}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleCreate}
+        initialData={editingRow || {}}
+        onClose={() => { setModalOpen(false); setEditingRow(null); }}
+        onSubmit={handleSave}
       />
     </div>
   );

@@ -3,6 +3,7 @@
 // agentic spot recommend, multimodal optimizer, vision damage assessment).
 import { useState, useEffect } from 'react';
 import api from '../api/client';
+import AIResponseCard from '../components/AIResponseCard';
 
 const TABS = [
   { k: 'integrations', label: 'Integrations' },
@@ -13,12 +14,22 @@ const TABS = [
   { k: 'vision', label: 'Damage Vision' }
 ];
 
+function normalizeRows(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+}
+
 export default function BacklogTools() {
   const [tab, setTab] = useState('integrations');
   const [busy, setBusy] = useState(false);
   const [out, setOut] = useState(null);
   const [err, setErr] = useState(null);
   const [diag, setDiag] = useState(null);
+  const [customers, setCustomers] = useState([]);
 
   // Billing form
   const [bEmail, setBEmail] = useState('');
@@ -44,6 +55,7 @@ export default function BacklogTools() {
 
   useEffect(() => {
     api.get('/backlog/_diagnostics').then(r => setDiag(r.data)).catch(() => {});
+    api.get('/customers').then(r => setCustomers(normalizeRows(r.data))).catch(() => setCustomers([]));
   }, []);
 
   async function probe(path) {
@@ -61,6 +73,17 @@ export default function BacklogTools() {
 
   const inputCls = 'w-full px-3 py-2 border border-slate-300 rounded mb-2';
   const btnCls = 'px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded mr-2 mb-2';
+  const customerEmailOptions = customers.filter((customer) => customer.email);
+  const renderCustomerEmailSelect = (value, onChange, placeholder) => (
+    <select className={inputCls} value={value} onChange={(event) => onChange(event.target.value)}>
+      <option value="">{placeholder}</option>
+      {customerEmailOptions.map((customer) => (
+        <option key={customer.id} value={customer.email}>
+          {customer.company_name || customer.contact_name || 'Customer'} - {customer.email}
+        </option>
+      ))}
+    </select>
+  );
 
   return (
     <div className="p-6">
@@ -92,6 +115,7 @@ export default function BacklogTools() {
 
       {tab === 'billing' && (
         <div className="bg-white p-4 rounded border">
+          {renderCustomerEmailSelect(bEmail, setBEmail, 'Select customer email')}
           <input className={inputCls} placeholder="customer email" value={bEmail} onChange={e => setBEmail(e.target.value)}/>
           <textarea className={inputCls} rows={4} value={bItems} onChange={e => setBItems(e.target.value)}/>
           <button className={btnCls} disabled={busy} onClick={() => {
@@ -104,6 +128,7 @@ export default function BacklogTools() {
 
       {tab === 'notify' && (
         <div className="bg-white p-4 rounded border">
+          {renderCustomerEmailSelect(nTo, setNTo, 'Select recipient customer email')}
           <input className={inputCls} placeholder="to (email)" value={nTo} onChange={e => setNTo(e.target.value)}/>
           <input className={inputCls} placeholder="subject" value={nSubject} onChange={e => setNSubject(e.target.value)}/>
           <textarea className={inputCls} rows={3} value={nBody} onChange={e => setNBody(e.target.value)}/>
@@ -143,7 +168,9 @@ export default function BacklogTools() {
 
       {err && <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">{err}</div>}
       {out && (
-        <pre className="mt-4 p-3 bg-slate-100 rounded text-xs overflow-auto max-h-96">{JSON.stringify(out, null, 2)}</pre>
+        <div className="mt-4">
+          <AIResponseCard response={out} title="Tool Result" />
+        </div>
       )}
     </div>
   );

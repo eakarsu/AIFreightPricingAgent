@@ -8,7 +8,7 @@ import FormModal from '../components/FormModal';
 
 const editFormFields = [
   { name: 'quote_number', label: 'Quote Number', type: 'text', required: true },
-  { name: 'customer_id', label: 'Customer ID', type: 'number', required: true },
+  { name: 'customer_id', label: 'Customer', type: 'number', required: true },
   { name: 'origin', label: 'Origin', type: 'text', required: true },
   { name: 'destination', label: 'Destination', type: 'text', required: true },
   {

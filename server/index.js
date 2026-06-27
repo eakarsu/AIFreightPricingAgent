@@ -8,6 +8,7 @@ const auth = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
 const db = require('./db');
 const { ensureSchema } = require('./services/aiResults');
+const createGeneratedFeatureRoute = require('./routes/generatedFeatureRoute');
 
 // === Batch 04 Gaps & Frontend Mounts ===
 const route_gap_no_dynamic_rate_calculator_endpoint_real = require('./routes/gap-no-dynamic-rate-calculator-endpoint-real');
@@ -158,6 +159,36 @@ app.use('/api/gap-no-webhook-receiversdispatchers', route_gap_no_webhook_receive
 app.use('/api/gap-no-carrier-performance-scorecard-reports', route_gap_no_carrier_performance_scorecard_reports);
 app.use('/api/gap-no-exceptionclaim-management-module', route_gap_no_exceptionclaim_management_module);
 app.use('/api/gap-no-websocket-real-time-shipment-tracking', route_gap_no_websocket_real_time_shipment_tracking);
+app.use('/api/cf-agentic-spot-market-trading-agent-monito', createGeneratedFeatureRoute({
+  slug: 'cf-agentic-spot-market-trading-agent-monito',
+  title: 'Agentic spot-market trading agent monitoring rates and auto-adjusting pricing rules',
+  description: 'Monitor spot rates and recommend pricing-rule adjustments.',
+}));
+app.use('/api/cf-multimodal-optimization-solver-across-tr', createGeneratedFeatureRoute({
+  slug: 'cf-multimodal-optimization-solver-across-tr',
+  title: 'Multimodal optimization solver across transport modes',
+  description: 'Recommend optimized shipment mode mixes across truck, rail, ocean, and air.',
+}));
+app.use('/api/cf-carrier-compliance-sustainability-tracki', createGeneratedFeatureRoute({
+  slug: 'cf-carrier-compliance-sustainability-tracki',
+  title: 'Carrier compliance and sustainability tracking',
+  description: 'Analyze carrier compliance, sustainability, and risk signals.',
+}));
+app.use('/api/cf-supply-chain-finance-integration-recomme', createGeneratedFeatureRoute({
+  slug: 'cf-supply-chain-finance-integration-recomme',
+  title: 'Supply-chain finance integration recommendations',
+  description: 'Recommend payment, invoice, and supply-chain finance improvements.',
+}));
+app.use('/api/cf-customer-demand-forecasting-lane-capacit', createGeneratedFeatureRoute({
+  slug: 'cf-customer-demand-forecasting-lane-capacit',
+  title: 'Customer demand forecasting and lane capacity planning',
+  description: 'Forecast customer demand and lane capacity pressure.',
+}));
+app.use('/api/cf-vision-based-damage-assessment-accepting', createGeneratedFeatureRoute({
+  slug: 'cf-vision-based-damage-assessment-accepting',
+  title: 'Vision-based damage assessment accepting photos',
+  description: 'Assess cargo damage and claim-readiness from visual evidence.',
+}));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

@@ -56,6 +56,7 @@ export default function MarketIntelligence() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
   const [showAIModal, setShowAIModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -87,14 +88,16 @@ export default function MarketIntelligence() {
     navigate(`/market-intelligence/${row.id}`);
   };
 
-  const handleCreate = async (formData) => {
+  const handleSave = async (formData) => {
     try {
       setSubmitting(true);
-      await api.post('/market-intelligence', formData);
+      if (editingRow) await api.put(`/market-intelligence/${editingRow.id}`, formData);
+      else await api.post('/market-intelligence', formData);
       setShowModal(false);
+      setEditingRow(null);
       fetchReports();
     } catch (err) {
-      console.error('Failed to create report:', err);
+      console.error('Failed to save report:', err);
       throw err;
     } finally {
       setSubmitting(false);
@@ -159,7 +162,7 @@ export default function MarketIntelligence() {
             </svg>
             AI Analysis
           </button>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          <button className="btn btn-primary" onClick={() => { setEditingRow(null); setShowModal(true); }}>
             New Report
           </button>
         </div>
@@ -168,18 +171,23 @@ export default function MarketIntelligence() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <DataTable
+        deleteEndpoint="/market-intelligence"
         columns={columns}
         data={reports}
         loading={loading}
         onRowClick={handleRowClick}
+        onEdit={(row) => { setEditingRow(row); setShowModal(true); }}
       />
 
       {showModal && (
         <FormModal
-          title="New Report"
+        deleteEndpoint="/market-intelligence"
+        onDeleted={() => window.location.reload()}
+          title={editingRow ? 'Edit Report' : 'New Report'}
           fields={formFields}
-          onSubmit={handleCreate}
-          onClose={() => setShowModal(false)}
+          initialData={editingRow || {}}
+          onSubmit={handleSave}
+          onClose={() => { setShowModal(false); setEditingRow(null); }}
           submitting={submitting}
         />
       )}
@@ -261,7 +269,7 @@ export default function MarketIntelligence() {
               {aiResult && (
                 <>
                   <AIResponseCard
-                    content={aiResult.analysis || aiResult.summary || JSON.stringify(aiResult)}
+                    response={aiResult}
                     title="Market Analysis"
                     onRegenerate={handleAIAnalysis}
                   />

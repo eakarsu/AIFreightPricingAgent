@@ -16,6 +16,7 @@ const nav = [
   { section: 'Intelligence', items: [
     { to: '/market-intelligence', label: 'Market Intel', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
     { to: '/cost-optimization', label: 'Cost Optimization', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { to: '/ai-hub', label: 'AI Hub', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
     { to: '/ai-pricing-tools', label: 'AI Pricing Tools', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
     { to: '/backlog-tools', label: 'Backlog Tools', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H7a2 2 0 00-2 2v2m6-4V5a2 2 0 114 0v2' },
   ]},
@@ -63,27 +64,6 @@ export default function Sidebar() {
             ))}
           </div>
         ))}
-      
-        {/* // === Batch 04 Gaps & Frontend Mounts === */}
-        <div style={{ borderTop: '1px solid #eee', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
-        <a href="/cf-agentic-spot-market-trading-agent-monito" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>Agentic spot-market trading agent monito</a>
-        <a href="/cf-multimodal-optimization-solver-across-tr" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>Multimodal optimization solver across tr</a>
-        <a href="/cf-carrier-compliance-sustainability-tracki" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>Carrier compliance + sustainability trac</a>
-        <a href="/cf-supply-chain-finance-integration-recomme" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>Supply-chain finance integration recomme</a>
-        <a href="/cf-customer-demand-forecasting-lane-capacit" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>Customer demand forecasting + lane capac</a>
-        <a href="/cf-vision-based-damage-assessment-accepting" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>Vision-based damage assessment accepting</a>
-        <a href="/gap-no-dynamic-rate-calculator-endpoint-real" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No dynamic-rate-calculator endpoint (rea</a>
-        <a href="/gap-no-carrier-capacity-forecast" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No carrier-capacity-forecast</a>
-        <a href="/gap-no-contract-optimization-recommender" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No contract-optimization recommender</a>
-        <a href="/gap-no-fraud-detection-on-shipment-patterns" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No fraud-detection on shipment patterns</a>
-        <a href="/gap-no-lane-profitability-analyzer" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No lane-profitability analyzer</a>
-        <a href="/gap-no-mode-of-shipment-recommender-air" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No mode-of-shipment recommender (air vs </a>
-        <a href="/gap-limited-notifications-only-2-file-refere" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>Limited notifications (only 2 file refer</a>
-        <a href="/gap-no-webhook-receiversdispatchers" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No webhook receivers/dispatchers</a>
-        <a href="/gap-no-carrier-performance-scorecard-reports" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No carrier performance scorecard reports</a>
-        <a href="/gap-no-exceptionclaim-management-module" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No exception/claim management module</a>
-        <a href="/gap-no-websocket-real-time-shipment-tracking" style={{ display: "block", padding: "0.4rem 0.6rem", fontSize: "0.85rem" }}>No WebSocket real-time shipment tracking</a>
-        </div>
 </nav>
     </div>
   );

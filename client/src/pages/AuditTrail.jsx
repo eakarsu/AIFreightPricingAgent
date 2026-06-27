@@ -57,6 +57,7 @@ export default function AuditTrail() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <DataTable
+        deleteEndpoint="/audit-trail"
         columns={columns}
         data={entries}
         loading={loading}
