@@ -7,23 +7,11 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const auth = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
 const db = require('./db');
-const { ensureSchema } = require('./services/aiResults');
-const createGeneratedFeatureRoute = require('./routes/generatedFeatureRoute');
-
-// === Batch 04 Gaps & Frontend Mounts ===
-const route_gap_no_dynamic_rate_calculator_endpoint_real = require('./routes/gap-no-dynamic-rate-calculator-endpoint-real');
-const route_gap_no_carrier_capacity_forecast = require('./routes/gap-no-carrier-capacity-forecast');
-const route_gap_no_contract_optimization_recommender = require('./routes/gap-no-contract-optimization-recommender');
-const route_gap_no_fraud_detection_on_shipment_patterns = require('./routes/gap-no-fraud-detection-on-shipment-patterns');
-const route_gap_no_lane_profitability_analyzer = require('./routes/gap-no-lane-profitability-analyzer');
-const route_gap_no_mode_of_shipment_recommender_air = require('./routes/gap-no-mode-of-shipment-recommender-air');
-const route_gap_limited_notifications_only_2_file_refere = require('./routes/gap-limited-notifications-only-2-file-refere');
-const route_gap_no_webhook_receiversdispatchers = require('./routes/gap-no-webhook-receiversdispatchers');
-const route_gap_no_carrier_performance_scorecard_reports = require('./routes/gap-no-carrier-performance-scorecard-reports');
-const route_gap_no_exceptionclaim_management_module = require('./routes/gap-no-exceptionclaim-management-module');
-const route_gap_no_websocket_real_time_shipment_tracking = require('./routes/gap-no-websocket-real-time-shipment-tracking');
 const app = express();
 const PORT = process.env.PORT || 3001;
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be configured with at least 32 characters');
+}
 
 // ── Production hardening ──
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -38,10 +26,6 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json({ limit: '2mb' }));
-
-// Boot-time schema bootstrap
-ensureSchema().then(() => console.log('[schema] ai_results / share-tokens / lane_elasticity ready.'))
-  .catch(err => console.warn('[schema] bootstrap warning:', err.message));
 
 // Health endpoint (no auth)
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
@@ -145,50 +129,8 @@ if (!process.env.OPENROUTER_API_KEY) {
   console.warn('[boot] WARNING: OPENROUTER_API_KEY missing — AI endpoints will return 500.');
 }
 
+app.use('/api/governed-quotes', require('./routes/governedQuotes'));
 app.use(errorHandler);
-
-
-app.use('/api/gap-no-dynamic-rate-calculator-endpoint-real', route_gap_no_dynamic_rate_calculator_endpoint_real);
-app.use('/api/gap-no-carrier-capacity-forecast', route_gap_no_carrier_capacity_forecast);
-app.use('/api/gap-no-contract-optimization-recommender', route_gap_no_contract_optimization_recommender);
-app.use('/api/gap-no-fraud-detection-on-shipment-patterns', route_gap_no_fraud_detection_on_shipment_patterns);
-app.use('/api/gap-no-lane-profitability-analyzer', route_gap_no_lane_profitability_analyzer);
-app.use('/api/gap-no-mode-of-shipment-recommender-air', route_gap_no_mode_of_shipment_recommender_air);
-app.use('/api/gap-limited-notifications-only-2-file-refere', route_gap_limited_notifications_only_2_file_refere);
-app.use('/api/gap-no-webhook-receiversdispatchers', route_gap_no_webhook_receiversdispatchers);
-app.use('/api/gap-no-carrier-performance-scorecard-reports', route_gap_no_carrier_performance_scorecard_reports);
-app.use('/api/gap-no-exceptionclaim-management-module', route_gap_no_exceptionclaim_management_module);
-app.use('/api/gap-no-websocket-real-time-shipment-tracking', route_gap_no_websocket_real_time_shipment_tracking);
-app.use('/api/cf-agentic-spot-market-trading-agent-monito', createGeneratedFeatureRoute({
-  slug: 'cf-agentic-spot-market-trading-agent-monito',
-  title: 'Agentic spot-market trading agent monitoring rates and auto-adjusting pricing rules',
-  description: 'Monitor spot rates and recommend pricing-rule adjustments.',
-}));
-app.use('/api/cf-multimodal-optimization-solver-across-tr', createGeneratedFeatureRoute({
-  slug: 'cf-multimodal-optimization-solver-across-tr',
-  title: 'Multimodal optimization solver across transport modes',
-  description: 'Recommend optimized shipment mode mixes across truck, rail, ocean, and air.',
-}));
-app.use('/api/cf-carrier-compliance-sustainability-tracki', createGeneratedFeatureRoute({
-  slug: 'cf-carrier-compliance-sustainability-tracki',
-  title: 'Carrier compliance and sustainability tracking',
-  description: 'Analyze carrier compliance, sustainability, and risk signals.',
-}));
-app.use('/api/cf-supply-chain-finance-integration-recomme', createGeneratedFeatureRoute({
-  slug: 'cf-supply-chain-finance-integration-recomme',
-  title: 'Supply-chain finance integration recommendations',
-  description: 'Recommend payment, invoice, and supply-chain finance improvements.',
-}));
-app.use('/api/cf-customer-demand-forecasting-lane-capacit', createGeneratedFeatureRoute({
-  slug: 'cf-customer-demand-forecasting-lane-capacit',
-  title: 'Customer demand forecasting and lane capacity planning',
-  description: 'Forecast customer demand and lane capacity pressure.',
-}));
-app.use('/api/cf-vision-based-damage-assessment-accepting', createGeneratedFeatureRoute({
-  slug: 'cf-vision-based-damage-assessment-accepting',
-  title: 'Vision-based damage assessment accepting photos',
-  description: 'Assess cargo damage and claim-readiness from visual evidence.',
-}));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

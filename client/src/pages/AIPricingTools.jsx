@@ -49,9 +49,10 @@ export default function AIPricingTools() {
     urgency: 'standard',
   });
   const [capacityForm, setCapacityForm] = useState({
+    route_id: '',
     horizon_days: 14,
-    region: 'US Southeast',
-    lanes_text: 'Dallas, US > Atlanta, US : dry_van\nLos Angeles, US > Phoenix, US : reefer\nChicago, US > Detroit, US : dry_van',
+    region: '',
+    lanes_text: '',
   });
   const [laneForm, setLaneForm] = useState({
     lookback_days: 90,
@@ -87,9 +88,23 @@ export default function AIPricingTools() {
       api.get('/shipments'),
     ])
       .then(([customerResponse, routeResponse, shipmentResponse]) => {
+        const routeRows = normalizeRows(routeResponse.data);
         setCustomers(normalizeRows(customerResponse.data));
-        setRoutes(normalizeRows(routeResponse.data));
+        setRoutes(routeRows);
         setShipments(normalizeRows(shipmentResponse.data));
+        if (routeRows.length > 0) {
+          setCapacityForm((current) => (
+            current.lanes_text
+              ? current
+              : {
+                  ...current,
+                  region: `${routeRows[0].origin_country || 'Origin'} to ${routeRows[0].destination_country || 'Destination'}`,
+                  lanes_text: routeRows.slice(0, 3).map((route) => (
+                    `${route.origin_city}, ${route.origin_country} > ${route.destination_city}, ${route.destination_country} : ${route.mode || 'truck'}`
+                  )).join('\n'),
+                }
+          ));
+        }
       })
       .catch(() => {
         setCustomers([]);
@@ -152,6 +167,51 @@ export default function AIPricingTools() {
 
     if (route) applyRouteToRate(route.id, extra);
     else setRateForm((current) => ({ ...current, origin: 'Dallas, US', destination: 'Atlanta, US', distance_miles: 781, ...extra }));
+  };
+
+  const routeToCapacityLine = (route) => (
+    `${route.origin_city}, ${route.origin_country} > ${route.destination_city}, ${route.destination_country} : ${route.mode || 'truck'}`
+  );
+
+  const applyRouteToCapacity = (routeId) => {
+    const route = routes.find((item) => String(item.id) === String(routeId));
+    if (!route) {
+      setCapacityForm((current) => ({ ...current, route_id: routeId }));
+      return;
+    }
+    setCapacityForm((current) => ({
+      ...current,
+      route_id: routeId,
+      region: `${route.origin_country || 'Origin'} to ${route.destination_country || 'Destination'}`,
+      lanes_text: routeToCapacityLine(route),
+    }));
+  };
+
+  const fillCapacityForecast = (kind) => {
+    if (kind === 'multi') {
+      const selectedRoutes = routes.slice(0, 3);
+      if (selectedRoutes.length > 0) {
+        setCapacityForm((current) => ({
+          ...current,
+          route_id: '',
+          horizon_days: 30,
+          region: 'Multi-lane network',
+          lanes_text: selectedRoutes.map(routeToCapacityLine).join('\n'),
+        }));
+      }
+      return;
+    }
+
+    const route = kind === 'tight' ? (routes[1] || routes[0]) : routes[0];
+    if (route) {
+      setCapacityForm((current) => ({
+        ...current,
+        route_id: route.id,
+        horizon_days: kind === 'tight' ? 60 : 30,
+        region: `${route.origin_country || 'Origin'} to ${route.destination_country || 'Destination'}`,
+        lanes_text: routeToCapacityLine(route),
+      }));
+    }
   };
 
   const applyRouteToMode = (routeId, extra = {}) => {
@@ -348,16 +408,37 @@ export default function AIPricingTools() {
   );
 
   const renderCapacityForm = () => (
-    <div className="grid grid-cols-2 gap-3">
-      <textarea
-        className="px-3 py-2 border rounded col-span-2 font-mono text-sm"
-        rows={3}
-        placeholder={'Lanes (required) — one per line:  Origin > Destination : mode\ne.g. Dallas, US > Atlanta, US : dry_van'}
-        value={capacityForm.lanes_text}
-        onChange={(e) => setCapacityForm({ ...capacityForm, lanes_text: e.target.value })}
-      />
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Horizon (days)" value={capacityForm.horizon_days} onChange={(e) => setCapacityForm({ ...capacityForm, horizon_days: e.target.value })} />
-      <input className="px-3 py-2 border rounded" placeholder="Region (optional)" value={capacityForm.region} onChange={(e) => setCapacityForm({ ...capacityForm, region: e.target.value })} />
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2 rounded-lg border border-indigo-100 bg-indigo-50 p-3">
+        <button type="button" className="px-3 py-1.5 rounded border border-indigo-200 bg-white text-sm font-medium text-indigo-700 hover:bg-indigo-100" onClick={() => fillCapacityForecast('lane')}>
+          Fill seeded lane
+        </button>
+        <button type="button" className="px-3 py-1.5 rounded border border-indigo-200 bg-white text-sm font-medium text-indigo-700 hover:bg-indigo-100" onClick={() => fillCapacityForecast('tight')}>
+          Fill tight capacity lane
+        </button>
+        <button type="button" className="px-3 py-1.5 rounded border border-indigo-200 bg-white text-sm font-medium text-indigo-700 hover:bg-indigo-100" onClick={() => fillCapacityForecast('multi')}>
+          Fill multi-lane forecast
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <select className="px-3 py-2 border rounded col-span-2" value={capacityForm.route_id} onChange={(e) => applyRouteToCapacity(e.target.value)}>
+          <option value="">Select lane to forecast</option>
+          {routes.map((route) => (
+            <option key={route.id} value={route.id}>
+              {route.origin_city}, {route.origin_country} to {route.destination_city}, {route.destination_country} - {route.mode} (#{route.id})
+            </option>
+          ))}
+        </select>
+        <textarea
+          className="px-3 py-2 border rounded col-span-2 font-mono text-sm"
+          rows={3}
+          placeholder={'Lanes (required) - one per line: Origin > Destination : mode'}
+          value={capacityForm.lanes_text}
+          onChange={(e) => setCapacityForm({ ...capacityForm, lanes_text: e.target.value, route_id: '' })}
+        />
+        <input type="number" className="px-3 py-2 border rounded" placeholder="Horizon (days)" value={capacityForm.horizon_days} onChange={(e) => setCapacityForm({ ...capacityForm, horizon_days: e.target.value })} />
+        <input className="px-3 py-2 border rounded" placeholder="Region / network context" value={capacityForm.region} onChange={(e) => setCapacityForm({ ...capacityForm, region: e.target.value })} />
+      </div>
     </div>
   );
 
@@ -439,7 +520,7 @@ export default function AIPricingTools() {
 
   const valid =
     (tab === 'dynamic-rate' && rateForm.origin && rateForm.destination && rateForm.weight_lbs) ||
-    (tab === 'carrier-capacity-forecast' && capacityForm.horizon_days) ||
+    (tab === 'carrier-capacity-forecast' && capacityForm.horizon_days && capacityForm.lanes_text) ||
     (tab === 'lane-profitability') ||
     (tab === 'contract-optimization') ||
     (tab === 'fraud-detection') ||
