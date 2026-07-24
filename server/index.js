@@ -33,6 +33,10 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().t
 // Customer portal (public, token-validated inside)
 app.use('/api/portal', require('./routes/portal'));
 
+// Authentication entry points must remain public. Protected identity routes
+// still require a valid token inside the router.
+app.use('/api/auth', require('./routes/auth'));
+
 // Apply auth middleware to everything else
 app.use(auth);
 
@@ -65,7 +69,6 @@ app.use(async (req, res, next) => {
 });
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/carriers', require('./routes/carriers'));
 app.use('/api/customers', require('./routes/customers'));

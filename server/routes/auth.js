@@ -2,6 +2,7 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
+const auth = require('../middleware/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -47,7 +48,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.get('/me', async (req, res) => {
+router.get('/me', auth, async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     const r = await db.query('SELECT id, name, email, role FROM users WHERE id = $1', [req.user.id]);
