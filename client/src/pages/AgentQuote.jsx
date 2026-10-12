@@ -17,6 +17,11 @@ export default function AgentQuote() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [customers, setCustomers] = useState([]);
+  const examples = [
+    { label: 'Truckload lane', values: { origin: 'Dallas, TX', destination: 'Atlanta, GA', mode: 'truckload', weight_kg: '8000', volume_cbm: '35' } },
+    { label: 'LTL freight', values: { origin: 'Chicago, IL', destination: 'Columbus, OH', mode: 'ltl', weight_kg: '1250', volume_cbm: '8' } },
+    { label: 'Ocean shipment', values: { origin: 'Los Angeles, CA', destination: 'Honolulu, HI', mode: 'ocean', weight_kg: '12000', volume_cbm: '55' } },
+  ];
 
   useEffect(() => {
     api.get('/customers')
@@ -49,6 +54,7 @@ export default function AgentQuote() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 bg-white p-4 rounded-lg shadow">
+        <div className="col-span-2 flex flex-wrap gap-2" aria-label="Fill pricing example">{examples.map(example => <button key={example.label} type="button" className="border rounded px-3 py-2" onClick={() => { setForm(current => ({ ...current, ...example.values, customer_id: current.customer_id || customers[0]?.id || '' })); setResult(null); }}>{example.label}</button>)}</div>
         <input placeholder="Origin" value={form.origin} onChange={e => setForm({ ...form, origin: e.target.value })} className="px-3 py-2 border rounded" />
         <input placeholder="Destination" value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} className="px-3 py-2 border rounded" />
         <select value={form.mode} onChange={e => setForm({ ...form, mode: e.target.value })} className="px-3 py-2 border rounded">
@@ -69,6 +75,7 @@ export default function AgentQuote() {
         <input type="number" placeholder="Weight (kg)" value={form.weight_kg} onChange={e => setForm({ ...form, weight_kg: e.target.value })} className="px-3 py-2 border rounded" />
         <input type="number" placeholder="Volume (CBM)" value={form.volume_cbm} onChange={e => setForm({ ...form, volume_cbm: e.target.value })} className="px-3 py-2 border rounded" />
       </div>
+      {!form.customer_id && !customers.length && <p className="mt-2 text-sm text-amber-800">No customer record is available. Select a real customer when one is available.</p>}
 
       <button onClick={submit} disabled={loading || !form.origin || !form.destination} className="mt-4 px-6 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
         {loading ? 'Calling agent...' : 'Run Pricing Agent'}

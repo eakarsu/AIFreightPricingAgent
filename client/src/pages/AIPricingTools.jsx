@@ -1,3 +1,5 @@
+
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples.jsx";
 import { useEffect, useState } from 'react';
 import api from '../api/client';
 import AIResponseCard from '../components/AIResponseCard';
@@ -30,6 +32,8 @@ function normalizeRows(payload) {
 }
 
 export default function AIPricingTools() {
+  const fullAIExamples = useFullAIExamples();
+
   const [tab, setTab] = useState('dynamic-rate');
   const [customers, setCustomers] = useState([]);
   const [routes, setRoutes] = useState([]);
@@ -360,7 +364,7 @@ export default function AIPricingTools() {
         </button>
       </div>
       <div className="grid grid-cols-2 gap-3">
-      <select className="px-3 py-2 border rounded" value={rateForm.route_id} onChange={(e) => applyRouteToRate(e.target.value)}>
+      <select className="px-3 py-2 border rounded" value={rateForm.route_id} onChange={(e) => applyRouteToRate(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: rateForm.route_id, change: (e) => applyRouteToRate(e.target.value), label: "rateForm.route_id", manual: false, json: false, sample: '' }, "p1-13515", undefined)}>
         <option value="">Select origin and destination lane</option>
         {routes.map((route) => (
           <option key={route.id} value={route.id}>
@@ -368,7 +372,7 @@ export default function AIPricingTools() {
           </option>
         ))}
       </select>
-      <select className="px-3 py-2 border rounded" value={rateForm.shipment_id} onChange={(e) => applyShipmentToRate(e.target.value)}>
+      <select className="px-3 py-2 border rounded" value={rateForm.shipment_id} onChange={(e) => applyShipmentToRate(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: rateForm.shipment_id, change: (e) => applyShipmentToRate(e.target.value), label: "rateForm.shipment_id", manual: false, json: false, sample: '' }, "p1-13987", undefined)}>
         <option value="">Or fill from shipment</option>
         {shipments.map((shipment) => (
           <option key={shipment.id} value={shipment.id}>
@@ -376,9 +380,9 @@ export default function AIPricingTools() {
           </option>
         ))}
       </select>
-      <input className="px-3 py-2 border rounded" placeholder="Origin city, state/country" value={rateForm.origin} onChange={(e) => setRateForm({ ...rateForm, origin: e.target.value, route_id: '' })} />
-      <input className="px-3 py-2 border rounded" placeholder="Destination city, state/country" value={rateForm.destination} onChange={(e) => setRateForm({ ...rateForm, destination: e.target.value, route_id: '' })} />
-      <select className="px-3 py-2 border rounded" value={rateForm.mode} onChange={(e) => setRateForm({ ...rateForm, mode: e.target.value })}>
+      <input className="px-3 py-2 border rounded" placeholder="Origin city, state/country" value={rateForm.origin} onChange={(e) => setRateForm({ ...rateForm, origin: e.target.value, route_id: '' })} data-full-ai-field={fullAIExamples.bind({ current: rateForm.origin, change: (e) => setRateForm({ ...rateForm, origin: e.target.value, route_id: '' }), label: "rateForm.origin", manual: false, json: false, sample: '' }, "p1-14424", undefined)} />
+      <input className="px-3 py-2 border rounded" placeholder="Destination city, state/country" value={rateForm.destination} onChange={(e) => setRateForm({ ...rateForm, destination: e.target.value, route_id: '' })} data-full-ai-field={fullAIExamples.bind({ current: rateForm.destination, change: (e) => setRateForm({ ...rateForm, destination: e.target.value, route_id: '' }), label: "rateForm.destination", manual: false, json: false, sample: '' }, "p1-14627", undefined)} />
+      <select className="px-3 py-2 border rounded" value={rateForm.mode} onChange={(e) => setRateForm({ ...rateForm, mode: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: rateForm.mode, change: (e) => setRateForm({ ...rateForm, mode: e.target.value }), label: "rateForm.mode", manual: false, json: false, sample: 'LTL' }, "p1-14845", undefined)}>
         <option value="LTL">LTL</option>
         <option value="FTL">FTL</option>
         <option value="truck">Truck</option>
@@ -387,18 +391,18 @@ export default function AIPricingTools() {
         <option value="rail">Rail</option>
         <option value="intermodal">Intermodal</option>
       </select>
-      <select className="px-3 py-2 border rounded" value={rateForm.equipment} onChange={(e) => setRateForm({ ...rateForm, equipment: e.target.value })}>
+      <select className="px-3 py-2 border rounded" value={rateForm.equipment} onChange={(e) => setRateForm({ ...rateForm, equipment: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: rateForm.equipment, change: (e) => setRateForm({ ...rateForm, equipment: e.target.value }), label: "rateForm.equipment", manual: false, json: false, sample: 'dry_van' }, "p1-15315", undefined)}>
         <option value="dry_van">Dry Van</option>
         <option value="reefer">Reefer</option>
         <option value="flatbed">Flatbed</option>
         <option value="container">Container</option>
         <option value="tanker">Tanker</option>
       </select>
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Weight (lbs)" value={rateForm.weight_lbs} onChange={(e) => setRateForm({ ...rateForm, weight_lbs: e.target.value })} />
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Distance (miles)" value={rateForm.distance_miles} onChange={(e) => setRateForm({ ...rateForm, distance_miles: e.target.value })} />
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Fuel surcharge %" value={rateForm.fuel_surcharge_pct} onChange={(e) => setRateForm({ ...rateForm, fuel_surcharge_pct: e.target.value })} />
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Capacity utilization %" value={rateForm.capacity_utilization_pct} onChange={(e) => setRateForm({ ...rateForm, capacity_utilization_pct: e.target.value })} />
-      <select className="px-3 py-2 border rounded" value={rateForm.urgency} onChange={(e) => setRateForm({ ...rateForm, urgency: e.target.value })}>
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Weight (lbs)" value={rateForm.weight_lbs} onChange={(e) => setRateForm({ ...rateForm, weight_lbs: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: rateForm.weight_lbs, change: (e) => setRateForm({ ...rateForm, weight_lbs: e.target.value }), label: "rateForm.weight_lbs", manual: false, json: false, sample: '' }, "p1-15729", undefined)} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Distance (miles)" value={rateForm.distance_miles} onChange={(e) => setRateForm({ ...rateForm, distance_miles: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: rateForm.distance_miles, change: (e) => setRateForm({ ...rateForm, distance_miles: e.target.value }), label: "rateForm.distance_miles", manual: false, json: false, sample: '' }, "p1-15926", undefined)} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Fuel surcharge %" value={rateForm.fuel_surcharge_pct} onChange={(e) => setRateForm({ ...rateForm, fuel_surcharge_pct: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: rateForm.fuel_surcharge_pct, change: (e) => setRateForm({ ...rateForm, fuel_surcharge_pct: e.target.value }), label: "rateForm.fuel_surcharge_pct", manual: false, json: false, sample: 28 }, "p1-16135", undefined)} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Capacity utilization %" value={rateForm.capacity_utilization_pct} onChange={(e) => setRateForm({ ...rateForm, capacity_utilization_pct: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: rateForm.capacity_utilization_pct, change: (e) => setRateForm({ ...rateForm, capacity_utilization_pct: e.target.value }), label: "rateForm.capacity_utilization_pct", manual: false, json: false, sample: 80 }, "p1-16352", undefined)} />
+      <select className="px-3 py-2 border rounded" value={rateForm.urgency} onChange={(e) => setRateForm({ ...rateForm, urgency: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: rateForm.urgency, change: (e) => setRateForm({ ...rateForm, urgency: e.target.value }), label: "rateForm.urgency", manual: false, json: false, sample: 'standard' }, "p1-16587", undefined)}>
         <option value="standard">Standard</option>
         <option value="expedited">Expedited</option>
         <option value="economy">Economy</option>
@@ -421,7 +425,7 @@ export default function AIPricingTools() {
         </button>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <select className="px-3 py-2 border rounded col-span-2" value={capacityForm.route_id} onChange={(e) => applyRouteToCapacity(e.target.value)}>
+        <select className="px-3 py-2 border rounded col-span-2" value={capacityForm.route_id} onChange={(e) => applyRouteToCapacity(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: capacityForm.route_id, change: (e) => applyRouteToCapacity(e.target.value), label: "capacityForm.route_id", manual: false, json: false, sample: '' }, "p1-17911", undefined)}>
           <option value="">Select lane to forecast</option>
           {routes.map((route) => (
             <option key={route.id} value={route.id}>
@@ -434,24 +438,24 @@ export default function AIPricingTools() {
           rows={3}
           placeholder={'Lanes (required) - one per line: Origin > Destination : mode'}
           value={capacityForm.lanes_text}
-          onChange={(e) => setCapacityForm({ ...capacityForm, lanes_text: e.target.value, route_id: '' })}
+          onChange={(e) => setCapacityForm({ ...capacityForm, lanes_text: e.target.value, route_id: '' })} data-full-ai-field={fullAIExamples.bind({ current: capacityForm.lanes_text, change: (e) => setCapacityForm({ ...capacityForm, lanes_text: e.target.value, route_id: '' }), label: "capacityForm.lanes_text", manual: false, json: false, sample: '' }, "p1-18407", undefined)}
         />
-        <input type="number" className="px-3 py-2 border rounded" placeholder="Horizon (days)" value={capacityForm.horizon_days} onChange={(e) => setCapacityForm({ ...capacityForm, horizon_days: e.target.value })} />
-        <input className="px-3 py-2 border rounded" placeholder="Region / network context" value={capacityForm.region} onChange={(e) => setCapacityForm({ ...capacityForm, region: e.target.value })} />
+        <input type="number" className="px-3 py-2 border rounded" placeholder="Horizon (days)" value={capacityForm.horizon_days} onChange={(e) => setCapacityForm({ ...capacityForm, horizon_days: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: capacityForm.horizon_days, change: (e) => setCapacityForm({ ...capacityForm, horizon_days: e.target.value }), label: "capacityForm.horizon_days", manual: false, json: false, sample: 14 }, "p1-18767", undefined)} />
+        <input className="px-3 py-2 border rounded" placeholder="Region / network context" value={capacityForm.region} onChange={(e) => setCapacityForm({ ...capacityForm, region: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: capacityForm.region, change: (e) => setCapacityForm({ ...capacityForm, region: e.target.value }), label: "capacityForm.region", manual: false, json: false, sample: '' }, "p1-18984", undefined)} />
       </div>
     </div>
   );
 
   const renderLaneForm = () => (
     <div className="grid grid-cols-2 gap-3">
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Lookback (days)" value={laneForm.lookback_days} onChange={(e) => setLaneForm({ ...laneForm, lookback_days: e.target.value })} />
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Min shipments" value={laneForm.min_shipments} onChange={(e) => setLaneForm({ ...laneForm, min_shipments: e.target.value })} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Lookback (days)" value={laneForm.lookback_days} onChange={(e) => setLaneForm({ ...laneForm, lookback_days: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: laneForm.lookback_days, change: (e) => setLaneForm({ ...laneForm, lookback_days: e.target.value }), label: "laneForm.lookback_days", manual: false, json: false, sample: 90 }, "p1-19291", undefined)} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Min shipments" value={laneForm.min_shipments} onChange={(e) => setLaneForm({ ...laneForm, min_shipments: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: laneForm.min_shipments, change: (e) => setLaneForm({ ...laneForm, min_shipments: e.target.value }), label: "laneForm.min_shipments", manual: false, json: false, sample: 5 }, "p1-19497", undefined)} />
     </div>
   );
 
   const renderContractForm = () => (
     <div className="grid grid-cols-2 gap-3">
-      <select className="px-3 py-2 border rounded" value={contractForm.customer_id} onChange={(e) => setContractForm({ ...contractForm, customer_id: e.target.value })}>
+      <select className="px-3 py-2 border rounded" value={contractForm.customer_id} onChange={(e) => setContractForm({ ...contractForm, customer_id: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: contractForm.customer_id, change: (e) => setContractForm({ ...contractForm, customer_id: e.target.value }), label: "contractForm.customer_id", manual: false, json: false, sample: '' }, "p1-19800", undefined)}>
         <option value="">All customers</option>
         {customers.map((customer) => (
           <option key={customer.id} value={customer.id}>
@@ -459,13 +463,13 @@ export default function AIPricingTools() {
           </option>
         ))}
       </select>
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Lookback (days)" value={contractForm.lookback_days} onChange={(e) => setContractForm({ ...contractForm, lookback_days: e.target.value })} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Lookback (days)" value={contractForm.lookback_days} onChange={(e) => setContractForm({ ...contractForm, lookback_days: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: contractForm.lookback_days, change: (e) => setContractForm({ ...contractForm, lookback_days: e.target.value }), label: "contractForm.lookback_days", manual: false, json: false, sample: 180 }, "p1-20253", undefined)} />
     </div>
   );
 
   const renderFraudForm = () => (
     <div className="grid grid-cols-2 gap-3">
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Lookback (days)" value={fraudForm.lookback_days} onChange={(e) => setFraudForm({ ...fraudForm, lookback_days: e.target.value })} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Lookback (days)" value={fraudForm.lookback_days} onChange={(e) => setFraudForm({ ...fraudForm, lookback_days: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: fraudForm.lookback_days, change: (e) => setFraudForm({ ...fraudForm, lookback_days: e.target.value }), label: "fraudForm.lookback_days", manual: false, json: false, sample: 90 }, "p1-20567", undefined)} />
     </div>
   );
 
@@ -483,7 +487,7 @@ export default function AIPricingTools() {
         </button>
       </div>
       <div className="grid grid-cols-2 gap-3">
-      <select className="px-3 py-2 border rounded" value={modeForm.route_id} onChange={(e) => applyRouteToMode(e.target.value)}>
+      <select className="px-3 py-2 border rounded" value={modeForm.route_id} onChange={(e) => applyRouteToMode(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: modeForm.route_id, change: (e) => applyRouteToMode(e.target.value), label: "modeForm.route_id", manual: false, json: false, sample: '' }, "p1-21760", undefined)}>
         <option value="">Select origin and destination lane</option>
         {routes.map((route) => (
           <option key={route.id} value={route.id}>
@@ -491,7 +495,7 @@ export default function AIPricingTools() {
           </option>
         ))}
       </select>
-      <select className="px-3 py-2 border rounded" value={modeForm.shipment_id} onChange={(e) => applyShipmentToMode(e.target.value)}>
+      <select className="px-3 py-2 border rounded" value={modeForm.shipment_id} onChange={(e) => applyShipmentToMode(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: modeForm.shipment_id, change: (e) => applyShipmentToMode(e.target.value), label: "modeForm.shipment_id", manual: false, json: false, sample: '' }, "p1-22232", undefined)}>
         <option value="">Or fill from shipment</option>
         {shipments.map((shipment) => (
           <option key={shipment.id} value={shipment.id}>
@@ -499,19 +503,19 @@ export default function AIPricingTools() {
           </option>
         ))}
       </select>
-      <input className="px-3 py-2 border rounded" placeholder="Origin city, state/country" value={modeForm.origin} onChange={(e) => setModeForm({ ...modeForm, origin: e.target.value, route_id: '' })} />
-      <input className="px-3 py-2 border rounded" placeholder="Destination city, state/country" value={modeForm.destination} onChange={(e) => setModeForm({ ...modeForm, destination: e.target.value, route_id: '' })} />
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Weight (kg)" value={modeForm.weight_kg} onChange={(e) => setModeForm({ ...modeForm, weight_kg: e.target.value })} />
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Volume (cbm, optional)" value={modeForm.volume_cbm} onChange={(e) => setModeForm({ ...modeForm, volume_cbm: e.target.value })} />
-      <select className="px-3 py-2 border rounded" value={modeForm.urgency} onChange={(e) => setModeForm({ ...modeForm, urgency: e.target.value })}>
+      <input className="px-3 py-2 border rounded" placeholder="Origin city, state/country" value={modeForm.origin} onChange={(e) => setModeForm({ ...modeForm, origin: e.target.value, route_id: '' })} data-full-ai-field={fullAIExamples.bind({ current: modeForm.origin, change: (e) => setModeForm({ ...modeForm, origin: e.target.value, route_id: '' }), label: "modeForm.origin", manual: false, json: false, sample: '' }, "p1-22669", undefined)} />
+      <input className="px-3 py-2 border rounded" placeholder="Destination city, state/country" value={modeForm.destination} onChange={(e) => setModeForm({ ...modeForm, destination: e.target.value, route_id: '' })} data-full-ai-field={fullAIExamples.bind({ current: modeForm.destination, change: (e) => setModeForm({ ...modeForm, destination: e.target.value, route_id: '' }), label: "modeForm.destination", manual: false, json: false, sample: '' }, "p1-22872", undefined)} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Weight (kg)" value={modeForm.weight_kg} onChange={(e) => setModeForm({ ...modeForm, weight_kg: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: modeForm.weight_kg, change: (e) => setModeForm({ ...modeForm, weight_kg: e.target.value }), label: "modeForm.weight_kg", manual: false, json: false, sample: '' }, "p1-23090", undefined)} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Volume (cbm, optional)" value={modeForm.volume_cbm} onChange={(e) => setModeForm({ ...modeForm, volume_cbm: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: modeForm.volume_cbm, change: (e) => setModeForm({ ...modeForm, volume_cbm: e.target.value }), label: "modeForm.volume_cbm", manual: false, json: false, sample: '' }, "p1-23284", undefined)} />
+      <select className="px-3 py-2 border rounded" value={modeForm.urgency} onChange={(e) => setModeForm({ ...modeForm, urgency: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: modeForm.urgency, change: (e) => setModeForm({ ...modeForm, urgency: e.target.value }), label: "modeForm.urgency", manual: false, json: false, sample: 'standard' }, "p1-23491", undefined)}>
         <option value="standard">Standard</option>
         <option value="expedited">Expedited</option>
         <option value="economy">Economy</option>
       </select>
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Budget USD (optional)" value={modeForm.budget_usd} onChange={(e) => setModeForm({ ...modeForm, budget_usd: e.target.value })} />
-      <input type="number" className="px-3 py-2 border rounded" placeholder="Declared value USD (optional)" value={modeForm.value_usd} onChange={(e) => setModeForm({ ...modeForm, value_usd: e.target.value })} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Budget USD (optional)" value={modeForm.budget_usd} onChange={(e) => setModeForm({ ...modeForm, budget_usd: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: modeForm.budget_usd, change: (e) => setModeForm({ ...modeForm, budget_usd: e.target.value }), label: "modeForm.budget_usd", manual: false, json: false, sample: '' }, "p1-23809", undefined)} />
+      <input type="number" className="px-3 py-2 border rounded" placeholder="Declared value USD (optional)" value={modeForm.value_usd} onChange={(e) => setModeForm({ ...modeForm, value_usd: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: modeForm.value_usd, change: (e) => setModeForm({ ...modeForm, value_usd: e.target.value }), label: "modeForm.value_usd", manual: false, json: false, sample: '' }, "p1-24015", undefined)} />
       <label className="flex items-center gap-2 px-3 py-2">
-        <input type="checkbox" checked={modeForm.hazmat} onChange={(e) => setModeForm({ ...modeForm, hazmat: e.target.checked })} />
+        <input type="checkbox" checked={modeForm.hazmat} onChange={(e) => setModeForm({ ...modeForm, hazmat: e.target.checked })} data-full-ai-field={fullAIExamples.bind({ current: modeForm.hazmat, change: (e) => setModeForm({ ...modeForm, hazmat: e.target.checked }), label: "modeForm.hazmat", manual: false, json: false, sample: false }, "p1-24289", undefined)} />
         Hazmat
       </label>
       </div>
@@ -527,7 +531,7 @@ export default function AIPricingTools() {
     (tab === 'shipment-mode-recommendation' && modeForm.origin && modeForm.destination && modeForm.weight_kg);
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-6 max-w-4xl" data-full-ai-workspace="AIPricingTools"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <h1 className="text-2xl font-bold mb-2">AI Pricing Tools</h1>
       <p className="text-gray-600 mb-4">
         Structured AI tools that complement Agent Quote: dynamic rate, carrier capacity forecast, and lane profitability.

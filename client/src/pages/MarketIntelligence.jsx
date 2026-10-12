@@ -70,7 +70,7 @@ export default function MarketIntelligence() {
     try {
       setLoading(true);
       const res = await api.get('/market-intelligence');
-      setReports(res.data);
+      setReports(Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : []);
       setError(null);
     } catch (err) {
       setError('Failed to load market intelligence reports.');

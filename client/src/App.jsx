@@ -1,3 +1,4 @@
+import AIReportLibrary from "./components/AIReportLibrary";
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -67,7 +68,7 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   return (
-    <Routes>
+    <><AIReportLibrary floating /><Routes>
         <Route path="/insights/timeline" element={<ProtectedRoute><TimelineView /></ProtectedRoute>} />
         <Route path="/codex/custom-viz" element={<ProtectedRoute><CodexCustomVizFeature /></ProtectedRoute>} />
         <Route path="/codex/operations" element={<ProtectedRoute><CodexOperationsFeature /></ProtectedRoute>} />
@@ -125,6 +126,6 @@ export default function App() {
           <Route path="/gap-no-carrier-performance-scorecard-reports" element={<GapNoCarrierPerformanceScorecardReports />} />
           <Route path="/gap-no-exceptionclaim-management-module" element={<GapNoExceptionclaimManagementModule />} />
           <Route path="/gap-no-websocket-real-time-shipment-tracking" element={<GapNoWebsocketRealTimeShipmentTracking />} />
-</Routes>
+</Routes></>
   );
 }

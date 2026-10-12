@@ -133,8 +133,32 @@ if (!process.env.OPENROUTER_API_KEY) {
 }
 
 app.use('/api/governed-quotes', require('./routes/governedQuotes'));
+// Gap-feature AI endpoints (POST /api/<slug>) — mounted before the error handler so they are reachable.
+for (const gapSlug of [
+  'gap-limited-notifications-only-2-file-refere',
+  'gap-no-carrier-capacity-forecast',
+  'gap-no-carrier-performance-scorecard-reports',
+  'gap-no-contract-optimization-recommender',
+  'gap-no-dynamic-rate-calculator-endpoint-real',
+  'gap-no-exceptionclaim-management-module',
+  'gap-no-fraud-detection-on-shipment-patterns',
+  'gap-no-lane-profitability-analyzer',
+  'gap-no-mode-of-shipment-recommender-air',
+  'gap-no-webhook-receiversdispatchers',
+  'gap-no-websocket-real-time-shipment-tracking',
+]) {
+  app.use(`/api/${gapSlug}`, require(`./routes/${gapSlug}`));
+}
 app.use(errorHandler);
 
+
+// Advisory AI reports only; native execution and approval routes stay unchanged.
+const aiWorkspaceSupport = require("./aiWorkspaceAdapters.cjs");
+const aiWorkspaceDatabase = require("./db.js").pool;
+app.use('/api/report-workspace', require("./aiWorkspace.cjs").createAIWorkspaceRouter({
+  pool: aiWorkspaceDatabase, authenticateToken: require("./middleware/auth.js"),
+  aiRateLimiter: aiWorkspaceSupport.createWorkspaceLimiter(), features: require("./aiWorkspaceFeatures.json"),
+}));
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

@@ -9,13 +9,24 @@ function titleize(value) {
 }
 
 function isEmpty(value) {
-  return value === null || value === undefined || value === '';
+  return value === null || value === undefined;
+}
+
+function parseStructured(value) {
+  if (typeof value !== 'string') return value;
+  const text = value.trim().replace(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i, '$1');
+  if (!/^[\[{]/.test(text)) return value;
+  try { return JSON.parse(text); } catch { return value; }
 }
 
 function getDisplayPayload(input) {
-  const value = input?.response ?? input?.content ?? input;
+  const value = parseStructured(input?.response ?? input?.content ?? input);
   if (!value || typeof value === 'string') return value;
-  return value.analysis || value.ai_analysis || value.assessment || value.parsed || value.result || value.output || value.summary || value;
+  const displayKeys = Object.keys(value).filter(key => !['model', 'model_used', 'tokens_used', 'usage', 'id', 'created_at', 'raw_response'].includes(key));
+  if (displayKeys.length === 1 && ['analysis', 'ai_analysis', 'assessment', 'parsed', 'result', 'output'].includes(displayKeys[0])) {
+    return parseStructured(value[displayKeys[0]]);
+  }
+  return Object.fromEntries(displayKeys.map(key => [key, parseStructured(value[key])]));
 }
 
 function Metric({ label, value }) {
@@ -23,17 +34,24 @@ function Metric({ label, value }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{titleize(label)}</div>
-      <div className="mt-1 break-words text-lg font-semibold text-slate-900">{String(value)}</div>
+      <div className="mt-1 break-words text-lg font-semibold text-slate-900">{value === '' ? '(empty string)' : String(value)}</div>
     </div>
   );
 }
 
 function ValueView({ value }) {
   if (isEmpty(value)) return <span className="text-slate-400">Not provided</span>;
-  if (typeof value === 'string') return <ReactMarkdown>{value}</ReactMarkdown>;
+  if (typeof value === 'string') {
+    const parsed = parseStructured(value);
+    return parsed === value ? (value === '' ? <span>(empty string)</span> : <ReactMarkdown>{value}</ReactMarkdown>) : <ValueView value={parsed} />;
+  }
   if (typeof value === 'number' || typeof value === 'boolean') return <span>{String(value)}</span>;
 
   if (Array.isArray(value)) {
+    if (value.length > 0 && value.every(item => item && typeof item === 'object' && !Array.isArray(item))) {
+      const keys = [...new Set(value.flatMap(item => Object.keys(item)))];
+      return <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr>{keys.map(key => <th className="border-b p-2" key={key}>{titleize(key)}</th>)}</tr></thead><tbody>{value.map((item, index) => <tr key={index}>{keys.map(key => <td className="border-b p-2 align-top" key={key}><ValueView value={item[key]} /></td>)}</tr>)}</tbody></table></div>;
+    }
     return (
       <div className="space-y-2">
         {value.map((item, index) => (
@@ -74,7 +92,7 @@ function ValueView({ value }) {
 
 export default function AIResponseCard({ content, response, title = 'AI Analysis', onRegenerate }) {
   const payload = getDisplayPayload({ content, response });
-  if (!payload) return null;
+  if (payload === null || payload === undefined) return null;
 
   // External data feeds (DOE/EIA, FMCSA, DAT, etc.) carry provider/source — they are
   // live API pulls, not LLM output, so label them accurately.

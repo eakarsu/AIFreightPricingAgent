@@ -107,7 +107,7 @@ export default function RateQuotes() {
     try {
       setLoading(true);
       const res = await api.get('/rate-quotes');
-      setQuotes(res.data);
+      setQuotes(Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : []);
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch rate quotes.');

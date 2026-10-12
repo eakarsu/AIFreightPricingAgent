@@ -11,6 +11,10 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleAutoFill = () => {
+    if (!import.meta.env.VITE_DEMO_EMAIL || !import.meta.env.VITE_DEMO_PASSWORD) {
+      setError('Demo credentials are not configured for this client. Sign in with an existing account.');
+      return;
+    }
     setEmail(import.meta.env.VITE_DEMO_EMAIL || '');
     setPassword(import.meta.env.VITE_DEMO_PASSWORD || '');
     setError('');
@@ -122,7 +126,7 @@ export default function Login() {
             onClick={handleAutoFill}
             className="w-full py-2.5 px-4 rounded-lg border-2 border-dashed border-gray-300 text-gray-600 font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
           >
-            Auto Fill Demo Credentials
+            Fill Demo Credentials
           </button>
 
           <p className="text-center text-sm text-gray-600 mt-6">

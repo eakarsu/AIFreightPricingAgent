@@ -12,7 +12,7 @@ export default function AIResults() {
     setLoading(true);
     try {
       const r = await getAIResults();
-      setRows(r.data?.data || []);
+      setRows(Array.isArray(r.data?.data) ? r.data.data : Array.isArray(r.data) ? r.data : []);
       setPagination(r.data?.pagination || { page: 1, totalPages: 1 });
     } catch (e) { console.error(e); }
     setLoading(false);

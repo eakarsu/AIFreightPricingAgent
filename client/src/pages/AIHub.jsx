@@ -279,9 +279,9 @@ function getToolPresets(toolId, lookups) {
       { label: 'Low risk', values: routePreset(route, { dwell_hours: 18, free_hours: 24, appointment_misses: 0, port_congestion_pct: 35, daily_charge: 150 }) },
     ],
     'damage-vision': [
-      { label: 'Visible pallet damage', values: { shipment_id: shipment?.id || '', damage_type: 'visible', description: 'Forklift impact on two outer cartons; product condition unknown.', image_urls: 'https://example.com/damage-pallet-front.jpg\nhttps://example.com/damage-pallet-side.jpg' } },
-      { label: 'Wet cargo claim', values: { shipment_id: altShipment?.id || shipment?.id || '', damage_type: 'wet', description: 'Water staining on cartons after delivery exception; consignee reports softened packaging.', image_urls: 'https://example.com/wet-carton-1.jpg\nhttps://example.com/wet-carton-2.jpg' } },
-      { label: 'Temperature exception', values: { shipment_id: shipment?.id || '', damage_type: 'temperature', description: 'Temperature logger exceeded threshold during transit; assess claim packet readiness.', image_urls: 'https://example.com/temp-logger.jpg\nhttps://example.com/product-condition.jpg' } },
+      { label: 'Visible pallet damage', values: { shipment_id: shipment?.id || '', damage_type: 'visible', description: 'Forklift impact on two outer cartons; product condition unknown.' } },
+      { label: 'Wet cargo claim', values: { shipment_id: altShipment?.id || shipment?.id || '', damage_type: 'wet', description: 'Water staining on cartons after delivery exception; consignee reports softened packaging.' } },
+      { label: 'Temperature exception', values: { shipment_id: shipment?.id || '', damage_type: 'temperature', description: 'Temperature logger exceeded threshold during transit; assess claim packet readiness.' } },
     ],
   };
 
@@ -299,6 +299,7 @@ export default function AIHub() {
   const [lookupError, setLookupError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [presetNotice, setPresetNotice] = useState('');
 
   const activeTool = tools.find(tool => tool.id === activeId) || tools[0];
   const form = forms[activeTool.id] || {};
@@ -337,14 +338,30 @@ export default function AIHub() {
   };
 
   const applyPreset = (values) => {
+    const currentForm = forms[activeTool.id] || {};
+    const preserved = {};
+    for (const field of activeTool.fields) {
+      if (['route', 'shipment', 'customer', 'carrier', 'contract', 'quote'].includes(field.type) && currentForm[field.name]) {
+        preserved[field.name] = currentForm[field.name];
+        if (field.type === 'route' || field.type === 'shipment') {
+          for (const name of ['origin', 'destination', 'mode', 'lane', 'weight_kg', 'volume_cbm']) {
+            if (currentForm[name] !== undefined) preserved[name] = currentForm[name];
+          }
+        }
+      }
+    }
     setForms(current => ({
       ...current,
       [activeTool.id]: {
         ...(activeTool.defaults || {}),
         ...values,
+        ...preserved,
+        ...(activeTool.id === 'damage-vision' ? { image_urls: currentForm.image_urls || '' } : {}),
       },
     }));
     setResult(null);
+    const missing = activeTool.fields.filter(field => field.required && !((preserved[field.name] ?? values[field.name]) || currentForm[field.name]));
+    setPresetNotice(missing.length ? `Still required: ${missing.map(field => field.label).join(', ')}. Select a real record or provide actual evidence before running.` : activeTool.id === 'damage-vision' ? 'Use actual image URLs from your evidence. The example does not provide images.' : 'Example fields filled. Review before running.');
   };
 
   const applyRoute = (routeId) => {
@@ -548,6 +565,7 @@ export default function AIHub() {
                 </div>
               </div>
             )}
+            {presetNotice && <p role="status" className="mb-4 text-sm text-amber-800">{presetNotice}</p>}
 
             <div className="grid gap-4 md:grid-cols-2">
               {activeTool.fields.map(field => (

@@ -80,7 +80,7 @@ export default function Shipments() {
     try {
       setLoading(true);
       const res = await api.get('/shipments');
-      setShipments(res.data);
+      setShipments(Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : []);
       setError(null);
     } catch (err) {
       setError('Failed to load shipments.');
